@@ -10,7 +10,7 @@ import help
 PROGRAM_STATE = State.MAIN #TODO change to State.LOGIN once log in functionality complete
 
 
-INPUT_MSG = "\nPlease enter a valid command\n>"
+INPUT_MSG = "\nEnter command ('help' for more info)\n>"
 
 #Common commands
 QUIT = "quit"
