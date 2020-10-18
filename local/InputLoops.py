@@ -4,7 +4,13 @@
 File that defines all input collection/input loop logic
 """
 
-INPUT_MSG = "\nPlease enter a valid command\n>"
+from state import State
+import help
+
+PROGRAM_STATE = State.MAIN #TODO change to State.LOGIN once log in functionality complete
+
+
+INPUT_MSG = "\nEnter command ('help' for more info)\n>"
 
 #Common commands
 QUIT = "quit"
@@ -32,6 +38,7 @@ def search(tokens):
     if tokens[1] == INGREDIENT_FLAG:
         termIndex += 1
         print("Searching for recipes containing '" + tokens[termIndex] + "'")
+        #TODO Search for recipes containing ingredient
     elif tokens[1] == NAME_FLAG:
         termIndex += 1
         search_name(tokens[termIndex])
@@ -43,14 +50,26 @@ def search_name(name):
     #TODO return recipe list with given name
     return []
 
+def quit(tokens):
+    global QUIT_REQUESTED
+    QUIT_REQUESTED = True
+
+def logout(tokens):
+    global LOGOUT_REQUESTED
+    LOGOUT_REQUESTED = True
+
+def getHelp(tokens):
+    print(help.HELP_MESSAGE_MAP[PROGRAM_STATE])
+    print(help.COMMON_HELP)
+
 def nothing(tokens):
     pass
 
 #COMMAND MAPS
 commonCommands = {
-    HELP: nothing,
-    LOGOUT: nothing,
-    QUIT: nothing
+    HELP: getHelp,
+    LOGOUT: logout,
+    QUIT: quit
 
 }
 
@@ -60,15 +79,46 @@ mainLoopCommands = {
     CREATE: nothing,
     INVENTORY: nothing,
 }
+
+COMMAND_SET_MAP = {
+    State.INGREDIENT_LIST: {},
+    State.LOGIN: {},
+    State.MAIN: mainLoopCommands,
+    State.RECIPE_CREATE: {},
+    State.RECIPE_LIST:{},
+    State.RECIPE_VIEW: {}
+}
+
 #END OF COMMAND MAPS
 
-def applyCommand(loopCommands, tokens):
+BACK_OUT_REQUESTED = False
+LOGOUT_REQUESTED = False
+QUIT_REQUESTED = False
+
+def shouldBackOut():
+    global QUIT_REQUESTED
+    global LOGOUT_REQUESTED
+    global BACK_OUT_REQUESTED
+
+    if QUIT_REQUESTED or LOGOUT_REQUESTED:
+        return True
+    elif BACK_OUT_REQUESTED:
+        BACK_OUT_REQUESTED = False
+        return True
+    return False
+
+
+
+
+def applyCommand(tokens):
+    loopCommands = COMMAND_SET_MAP[PROGRAM_STATE]
+
     try:
         first = tokens[0]
         if first in mainLoopCommands:
                 loopCommands[first](tokens)
         elif first in commonCommands:
-                loopCommands[first](tokens)
+                commonCommands[first](tokens)
         else:
             print("INVALID COMMAND")
     except IndexError:
@@ -112,10 +162,12 @@ def LoginLoop():
     pass
 
 def MainLoop():
-    while True:
+    global PROGRAM_STATE
+    PROGRAM_STATE = State.MAIN
+    while not shouldBackOut():
         tokens = get_tokenized_input()
 
-        applyCommand(mainLoopCommands, tokens)
+        applyCommand(tokens)
 
 def RecipeCreateLoop():
     pass
@@ -133,12 +185,6 @@ def IngredientListLoop():
 def main():
     MainLoop()
 
-    tokens = ['hello']
-    while(len(tokens) > 0):
-        tokens = get_tokenized_input()
-        print(tokens)
 
-
-
-
-main()
+if __name__ == '__main__':
+    main()
