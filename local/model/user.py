@@ -39,10 +39,13 @@ class User:
         self.manager.commit()
         cur.close()
 
-if __name__ == '__main__':
-    man = RecipeManager.new_from_env()
-    user = User.register_new_user(man, 'emi', 'Secure Password Lol')
-    print(f'{user.uid} : {user.username} {user.pass_hash}')
-    user.username = 'thea'
-    user.save()
-    print(f'{user.uid} : {user.username} {user.pass_hash}')
+    def get_user(manager, username):
+        cur = manager.get_cursor()
+        cur.execute("""
+            SELECT uid, password_hash
+            FROM users
+            WHERE username = %s;
+        """, (username, ))
+        user_data = cur.fetchone()
+
+        return User(manager, user_data[0], username, user_data[1])
