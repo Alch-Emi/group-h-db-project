@@ -5,13 +5,13 @@ def init_database(conn):
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users(
-            uid             INT         PRIMARY KEY NOT NULL,
+            uid             SERIAL      PRIMARY KEY,
             username        VARCHAR(50) NOT NULL UNIQUE,
             password_hash   VARCHAR(60) NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS recipes(
-            rid             INT         PRIMARY KEY NOT NULL,
+            rid             SERIAL      PRIMARY KEY,
             servings        INT         NOT NULL,
             prep_time       INT         NOT NULL,
             rName           VARCHAR(50) NOT NULL,
