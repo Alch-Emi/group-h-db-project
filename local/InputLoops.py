@@ -4,7 +4,7 @@
 File that defines all input collection/input loop logic
 """
 
-INPUT_MSG = "Please enter a valid command\n>"
+INPUT_MSG = "\nPlease enter a valid command\n>"
 
 #Common commands
 QUIT = "quit"
@@ -13,10 +13,10 @@ HELP = "help"
 
 
 #Main Loop Commands
+
 SEARCH = "search"
 NAME_FLAG = "-n"
 INGREDIENT_FLAG = "-i"
-
 
 GET = "get"
 CREATE = "create"
@@ -46,7 +46,7 @@ def search_name(name):
 def nothing(tokens):
     pass
 
-#TODO COMMAND MAPS
+#COMMAND MAPS
 commonCommands = {
     HELP: nothing,
     LOGOUT: nothing,
@@ -60,8 +60,19 @@ mainLoopCommands = {
     CREATE: nothing,
     INVENTORY: nothing,
 }
-#TODO END OF COMMAND MAPS
+#END OF COMMAND MAPS
 
+def applyCommand(loopCommands, tokens):
+    try:
+        first = tokens[0]
+        if first in mainLoopCommands:
+                loopCommands[first](tokens)
+        elif first in commonCommands:
+                loopCommands[first](tokens)
+        else:
+            print("INVALID COMMAND")
+    except IndexError:
+        print("invalid arguments for given command")
 
 def get_tokenized_input():
     """
@@ -104,14 +115,7 @@ def MainLoop():
     while True:
         tokens = get_tokenized_input()
 
-        first = tokens[0]
-        if first in mainLoopCommands:
-            try:
-                mainLoopCommands[first](tokens)
-            except IndexError:
-                print("invalid arguments for given command")
-        else:
-            print("INVALID COMMAND")
+        applyCommand(mainLoopCommands, tokens)
 
 def RecipeCreateLoop():
     pass
