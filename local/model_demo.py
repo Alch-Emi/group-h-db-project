@@ -24,6 +24,12 @@ if __name__ == '__main__':
     print(f'Fetched from database: {user.uid} : {user.username} {user.pass_hash}')
 
     # Validate user password
-    good_password = user.check_password('Secure Password Lol')
-    bad_password = user.check_password('tosheraoseatnsr')
-    print(f'Valid password matches: {good_password}.  Bad password matches: {bad_password}')
+    password_matches = user.check_password('tosheraoseatnsr')
+    print(f'Password matches: {password_matches}')
+
+    # Update password, and try again
+    user.change_password('tosheraoseatnsr')
+    user.save()
+
+    password_matches = user.check_password('tosheraoseatnsr')
+    print(f'Password matches after update: {password_matches}')

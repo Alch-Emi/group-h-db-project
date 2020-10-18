@@ -52,3 +52,7 @@ class User:
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode(), self.pass_hash.encode())
+
+    # Requires a call to save() still
+    def change_password(self, new_pass):
+        self.pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode()
