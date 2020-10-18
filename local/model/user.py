@@ -49,3 +49,6 @@ class User:
         user_data = cur.fetchone()
 
         return User(manager, user_data[0], username, user_data[1])
+
+    def check_password(self, password):
+        return bcrypt.checkpw(password.encode(), self.pass_hash.encode())

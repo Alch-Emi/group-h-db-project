@@ -22,3 +22,8 @@ if __name__ == '__main__':
     user = None
     user = User.get_user(man, 'thea')
     print(f'Fetched from database: {user.uid} : {user.username} {user.pass_hash}')
+
+    # Validate user password
+    good_password = user.check_password('Secure Password Lol')
+    bad_password = user.check_password('tosheraoseatnsr')
+    print(f'Valid password matches: {good_password}.  Bad password matches: {bad_password}')
