@@ -9,26 +9,66 @@ INPUT_MSG = "Please enter a valid command\n>"
 #Common commands
 QUIT = "quit"
 LOGOUT = 'logout'
+HELP = "help"
 
 
 #Main Loop Commands
 SEARCH = "search"
+NAME_FLAG = "-n"
+INGREDIENT_FLAG = "-i"
+
+
 GET = "get"
 CREATE = "create"
 INVENTORY = "inventory"
 LOGOUT = "logout"
 
+
+MANAGER = [] #TODO Create recipe manager on login
+
+
+def search(tokens):
+    termIndex = 1
+    if tokens[1] == INGREDIENT_FLAG:
+        termIndex += 1
+        print("Searching for recipes containing '" + tokens[termIndex] + "'")
+    elif tokens[1] == NAME_FLAG:
+        termIndex += 1
+        search_name(tokens[termIndex])
+    else:
+        search_name(tokens[termIndex])
+
+def search_name(name):
+    print("Searching Recipe DB for '" + name + "'")
+    #TODO return recipe list with given name
+    return []
+
+def nothing(tokens):
+    pass
+
+#TODO COMMAND MAPS
+commonCommands = {
+    HELP: nothing,
+    LOGOUT: nothing,
+    QUIT: nothing
+
+}
+
 mainLoopCommands = {
-    SEARCH: nothing,
+    SEARCH: search,
     GET: nothing,
     CREATE: nothing,
     INVENTORY: nothing,
 }
+#TODO END OF COMMAND MAPS
 
-def nothing():
-    pass
 
 def get_tokenized_input():
+    """
+    Gets a line of input, and returns a list of strings that were separated by
+    spaces. Any text between 2 single quotes is kept intact
+    :return: List of strings
+    """
     uin = input(INPUT_MSG)
     in_chunks = []
     dont_strip = []
@@ -57,33 +97,38 @@ def get_tokenized_input():
     return tokens
 
 
-    def LoginLoop():
-        pass
+def LoginLoop():
+    pass
 
-    def MainLoop(recipeManager):
-        while True:
-            tokens = get_tokenized_input()
+def MainLoop():
+    while True:
+        tokens = get_tokenized_input()
 
-            first = tokens[0]
-            if(first in mainLoopCommands):
-                mainLoopCommands[first]()
-            else:
-                print("INVALID COMMAND")
+        first = tokens[0]
+        if first in mainLoopCommands:
+            try:
+                mainLoopCommands[first](tokens)
+            except IndexError:
+                print("invalid arguments for given command")
+        else:
+            print("INVALID COMMAND")
 
-    def RecipeCreateLoop():
-        pass
+def RecipeCreateLoop():
+    pass
 
-    def RecipeListLoop():
-        pass
+def RecipeListLoop():
+    pass
 
-    def RecipeViewLoop():
-        pass
+def RecipeViewLoop():
+    pass
 
-    def IngredientListLoop():
-        pass
+def IngredientListLoop():
+    pass
 
 
 def main():
+    MainLoop()
+
     tokens = ['hello']
     while(len(tokens) > 0):
         tokens = get_tokenized_input()
