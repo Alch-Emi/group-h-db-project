@@ -1,4 +1,4 @@
-from model import RecipeManager, User, Ingredient
+from model import RecipeManager, User, Ingredient, Recipe
 
 if __name__ == '__main__':
     # Create RecipeManager
@@ -7,12 +7,11 @@ if __name__ == '__main__':
     # Clean out database (for demo only)
     c = man.get_cursor()
     c.execute("""
+        DELETE FROM recipes WHERE rname = 'Pancakes!';
         DELETE FROM users WHERE username = 'thea';
 
-        DELETE FROM ingredients
-        WHERE iname = 'Flour'
-        OR iname = 'Soymilk'
-        OR iname = 'Water';
+        DELETE FROM requires_ingredient;
+        DELETE FROM ingredients;
     """)
     c.close()
 
@@ -43,8 +42,11 @@ if __name__ == '__main__':
 
     # Create a few ingredients
     flour = Ingredient.register_ingredient(man, 'Flour', 'cups', 'pantry')
-    soymilk = Ingredient.register_ingredient(man, 'Soymilk', 'cups', 'fridge')
     water = Ingredient.register_ingredient(man, 'Water', 'pounds', 'tap')
+    sugar = Ingredient.register_ingredient(man, 'Sugar', 'tbs', 'pantry')
+    baking_pow = Ingredient.register_ingredient(man, 'Baking Powder', 'tsp', 'pantry')
+    salt = Ingredient.register_ingredient(man, 'Salt', 'tsp', 'cupboard')
+    oil = Ingredient.register_ingredient(man, 'Oil', 'tbs', 'cupboard')
 
     # Update an ingredient
     water.unit = 'cups'
@@ -59,3 +61,48 @@ if __name__ == '__main__':
     print('All available ingredients:')
     for ingredient in Ingredient.list_all_ingredients(man):
         print(f'\t{ingredient.iname}')
+
+    # Create a recipe
+    pancakes = Recipe.register_recipe(
+        man,          # RecipeManager
+        'Cakes',  # name
+        5,            # servings
+        20,           # prep time
+        ['Pan', 'Stove'], # equipment
+        user,         # recipe owner (should be a User)
+        {             # Ingredients
+            flour: 1.25,
+            water: 1.25,
+            sugar: 2,
+            baking_pow: 2,
+            salt: 0.5,
+            oil: 1
+        },
+        [             # steps
+            'Combine dry ingredients & mix',
+            'Combine wet ingredients and whisk',
+            'Combine wet and dry ingredients and stir briefly',
+            'Dolop onto pan and cook, flipping partway through'
+        ]
+    )
+
+    # Update the name
+    pancakes.name = 'Pancakes!'
+    pancakes.save_properties()
+
+    # Update the required equipment
+    pancakes.equipment.append('Spatula')
+    pancakes.save_equipment()
+
+    # Update the steps
+    pancakes.steps.append('Enjoy!')
+    pancakes.save_steps()
+
+    # Display
+    print(f'\n{pancakes.name}')
+    print('Ingredients:')
+    for ingr, ammt in pancakes.ingredients.items():
+        print(f'\t{ingr.iname}:   {ammt} {ingr.unit}')
+    print('Steps:')
+    for step in pancakes.steps:
+        print(f'\t{step}')
