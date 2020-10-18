@@ -1,24 +1,4 @@
 import bcrypt
-import db_init
-import psycopg2
-
-import os
-
-class RecipeManager:
-    def __init__(self, db_conn):
-        db_init.init_database(db_conn)
-        self.conn = db_conn
-
-    def new_from_env():
-        return RecipeManager(
-            psycopg2.connect(os.environ['DATABASE'])
-        )
-
-    def get_cursor(self):
-        return self.conn.cursor()
-
-    def commit(self):
-        self.conn.commit()
 
 class User:
     def __init__(self, manager, uid, username, pass_hash):
@@ -55,6 +35,7 @@ class User:
             WHERE
                 uid = %s;
         """, (self.username, self.pass_hash, self.uid))
+        #TODO Handle existing user
         self.manager.commit()
         cur.close()
 
