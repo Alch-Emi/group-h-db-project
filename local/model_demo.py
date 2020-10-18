@@ -1,4 +1,4 @@
-from model import RecipeManager, User
+from model import RecipeManager, User, Ingredient
 
 if __name__ == '__main__':
     # Create RecipeManager
@@ -6,7 +6,14 @@ if __name__ == '__main__':
 
     # Clean out database (for demo only)
     c = man.get_cursor()
-    c.execute("DELETE FROM users WHERE username = 'thea';")
+    c.execute("""
+        DELETE FROM users WHERE username = 'thea';
+
+        DELETE FROM ingredients
+        WHERE iname = 'Flour'
+        OR iname = 'Soymilk'
+        OR iname = 'Water';
+    """)
     c.close()
 
     # Register new user
@@ -33,3 +40,22 @@ if __name__ == '__main__':
 
     password_matches = user.check_password('tosheraoseatnsr')
     print(f'Password matches after update: {password_matches}')
+
+    # Create a few ingredients
+    flour = Ingredient.register_ingredient(man, 'Flour', 'cups', 'pantry')
+    soymilk = Ingredient.register_ingredient(man, 'Soymilk', 'cups', 'fridge')
+    water = Ingredient.register_ingredient(man, 'Water', 'pounds', 'tap')
+
+    # Update an ingredient
+    water.unit = 'cups'
+    water.save()
+
+    # Retrieve a specific ingredient
+    flour = None
+    flour = Ingredient.get_ingredient(man, 'Flour')
+    print(f'Flour is measured in {flour.unit}')
+
+    # List all ingredients
+    print('All available ingredients:')
+    for ingredient in Ingredient.list_all_ingredients(man):
+        print(f'\t{ingredient.iname}')
