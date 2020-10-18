@@ -47,6 +47,7 @@ class User:
             WHERE username = %s;
         """, (username, ))
         user_data = cur.fetchone()
+        cur.close()
 
         return User(manager, user_data[0], username, user_data[1])
 
