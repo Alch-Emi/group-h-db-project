@@ -57,7 +57,18 @@ class User:
         """, (self.username, self.pass_hash, self.uid))
         #TODO Handle existing user
         self.manager.commit()
+
+    def get_user_by_uid(manager, uid):
+        cur = manager.get_cursor()
+        cur.execute("""
+            SELECT username, password_hash
+            FROM users
+            WHERE uid = %s;
+        """, (uid, ))
+        user_data = cur.fetchone()
         cur.close()
+
+        return User(manager, uid, user_data[0], user_data[1])
 
     def get_user(manager, username):
         cur = manager.get_cursor()

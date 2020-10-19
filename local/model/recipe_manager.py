@@ -5,6 +5,7 @@ import os
 import psycopg2
 
 from model.user import User
+from model.recipe import Recipe
 
 
 class RecipeManager:
@@ -14,14 +15,16 @@ class RecipeManager:
 
     def searchRecipes(self, name):
         cur = self.get_cursor()
-        partialName = [x.strip() for x in name.split(' ')]
+        partialName = ['%' + x.strip() + '%' for x in name.split(' ')]
         sqlQuery = "SELECT * FROM RECIPES WHERE "
         for partial in partialName:
-            sqlQuery += "rName LIKE '%" + partial + "%' OR"
+            sqlQuery += "rName LIKE %s OR"
         sqlQuery = sqlQuery[:-2]
-        cur.execute(sqlQuery)
-        record = cur.fetchall()
-        return record
+        cur.execute(sqlQuery, partialName)
+        records = cur.fetchall()
+        cur.close()
+
+        return (Recipe.new_from_record(self, record) for record in records)
 
     def getUser(self, username):
         cur = self.get_cursor()

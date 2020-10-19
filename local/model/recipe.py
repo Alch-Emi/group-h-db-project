@@ -3,6 +3,9 @@ import uuid
 
 from psycopg2.extras import execute_values
 
+from model.ingredient import Ingredient
+from model.user import User
+
 class Recipe:
     def __init__(self, manager, rid, servings, time, name, equip, owner, ingr, steps):
         self.manager = manager
@@ -14,6 +17,47 @@ class Recipe:
         self.owner = owner
         self.ingredients = ingr
         self.steps = steps
+
+    def new_from_record(manager, record):
+        rid = record[0]
+        cur = manager.get_cursor()
+
+        # Retrieve ingredients
+        cur.execute("SELECT iname,amount FROM requires_ingredient WHERE rid = %s;", (rid,))
+        ingredients = dict(
+            (Ingredient.get_ingredient(manager, ingr_rec[0]), ingr_rec[1])
+            for ingr_rec in cur
+        )
+
+        # Retrieve steps
+        cur.execute("""
+            SELECT stepnum, description FROM steps WHERE rid = %s ORDER BY stepnum;
+        """, (rid,))
+        steps = [
+            step_rec[1]
+            for step_rec in cur
+        ]
+
+        # Retrieve equipment
+        cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (rid,))
+        equipment = cur.fetchall()
+        cur.close()
+
+        # Retrieve owner
+        owner = User.get_user_by_uid(manager, record[4])
+
+        # Produce recipe
+        return Recipe(
+            manager,
+            rid,
+            record[1],
+            record[2],
+            record[3],
+            equipment,
+            owner,
+            ingredients,
+            steps
+        )
 
     def datesMade(self):
         cur = self.manager.get_cursor()
