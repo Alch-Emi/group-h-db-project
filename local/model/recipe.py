@@ -1,3 +1,6 @@
+import datetime
+import uuid
+
 from psycopg2.extras import execute_values
 
 class Recipe:
@@ -11,6 +14,40 @@ class Recipe:
         self.owner = owner
         self.ingredients = ingr
         self.steps = steps
+
+    def datesMade(self):
+        cur = self.manager.get_cursor()
+        rid = self.id
+        cur.execute("SELECT dateMade FROM DATE_MADE WHERE RID = %s", rid)
+        record = cur.fetchall()
+        return record
+
+    def markMade(self, user):
+        cur = self.manager.get_cursor()
+        uid = user.Uid
+        rid = self.rid
+        for ingredient in self.ingredients:
+            if (ingredient not in user.get_owned_ingr()) or \
+                    (user.get_owned_ingr()[ingredient] - self.ingredients[ingredient] < 0):
+                print("You do not have sufficient ingredient to make this recipe")
+                return
+            user.substractOwnedIngr(ingredient, self.ingredients[ingredient])
+        cur.execute("""
+            INSERT INTO DATE_MADE (uid, RID, dateMade) 
+            VALUES (%s, %s, %s);
+            """, (uid, rid, datetime.datetime.now()))
+        self.manager.commit()
+        cur.close()
+
+    def changeServings(self, targetServings):
+        #not sure if this would modify the field of the class and whether we want it modified
+        ingredients = self.ingredients
+        for ingredient in ingredients:
+            ingredients[ingredient] = ingredients[ingredient] * (targetServings / self.servings)
+        return ingredients
+
+    def getRID(self):
+        return self.rid
 
     def register_recipe(
             manager,

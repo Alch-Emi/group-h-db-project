@@ -6,8 +6,28 @@ class User:
         self.uid = uid
         self.username = username
         self.pass_hash = pass_hash
+        self.owned_ingredients = {}
 
-    def register_new_user(manager, username, password):
+    def substractOwnedIngr(self, ingr_name, qty_used):
+        self.owned_ingredients[ingr_name] -= qty_used
+
+    def listDatesMade(self, recipe):
+        cur = self.manager.get_cursor()
+        uid = self.uid
+        rid = recipe.getRID()
+        cur.execute("""
+            SELECT dateMade FROM DATE_MADE WHERE uid = %s AND RID = %s
+            """, uid, rid)
+        record = cur.fetchall()
+        return record
+
+    def get_owned_ingr(self):
+        return self.owned_ingredients
+
+    def add_owned_ingr(self, ingr_name, qty):
+        self.owned_ingredients[ingr_name] = qty
+
+    def register_new_user(self, manager, username, password):
         pass_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
 
         cur = manager.get_cursor()
@@ -39,7 +59,7 @@ class User:
         self.manager.commit()
         cur.close()
 
-    def get_user(manager, username):
+    def get_user(self, manager, username):
         cur = manager.get_cursor()
         cur.execute("""
             SELECT uid, password_hash
