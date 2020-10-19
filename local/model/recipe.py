@@ -40,11 +40,10 @@ class Recipe:
         cur.close()
 
     def changeServings(self, targetServings):
-        #not sure if this would modify the field of the class and whether we want it modified
-        ingredients = self.ingredients
-        for ingredient in ingredients:
-            ingredients[ingredient] = ingredients[ingredient] * (targetServings / self.servings)
-        return ingredients
+        return dict(
+            (ingredient[0], ingredient[1] * (targetServings / self.servings))
+            for ingredient in self.ingredients.items()
+        )
 
     def getRID(self):
         return self.rid
