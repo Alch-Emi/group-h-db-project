@@ -4,7 +4,7 @@ import os
 
 import psycopg2
 
-from local.model.user import User
+from model.user import User
 
 
 class RecipeManager:
@@ -47,7 +47,7 @@ class RecipeManager:
 
         return User(self, uid, username, p_hash)
 
-    def new_from_env(self):
+    def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])
         )
