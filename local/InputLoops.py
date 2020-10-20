@@ -55,7 +55,7 @@ INVENTORY = "inventory"
 LOGOUT = "logout"
 
 
-MANAGER = RecipeManager.new_from_env(None)
+MANAGER = RecipeManager.new_from_env()
 USER = None
 
 
@@ -89,7 +89,7 @@ def logout(tokens):
 def login(tokens):
     global USER
 
-    account = User.get_user(0, MANAGER, tokens[1])
+    account = User.get_user(MANAGER, tokens[1])
     if(account.check_password(tokens[2])):
         print(f"Welcome, {tokens[1]}")
         USER = account
