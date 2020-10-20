@@ -26,30 +26,6 @@ class RecipeManager:
 
         return (Recipe.new_from_record(self, record) for record in records)
 
-    def getUser(self, username):
-        cur = self.get_cursor()
-        cur.execute("""
-            SELECT * FROM USERS WHERE username = %s
-            """, username)
-        record = cur.fetchall()
-        return record
-
-    def createUser(self, username, password):
-        cur = self.get_cursor()
-        p_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
-        cur.execute("""
-            INSERT INTO USER (username, passwordHash)
-            VALUES (%s, %s);
-            RETURNING uid;
-            """, (username, p_hash))
-
-        uid = cur.fetchone()[0]
-
-        self.commit()
-        cur.close()
-
-        return User(self, uid, username, p_hash)
-
     def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])
