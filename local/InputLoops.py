@@ -28,7 +28,8 @@ HEADER_MAP = {
     State.INGREDIENT_LIST: "INGREDIENT LIST",
     State.RECIPE_CREATE: "RECIPE CREATION",
     State.RECIPE_LIST: "RECIPE LIST",
-    State.MAIN: "RECIPE DB"
+    State.MAIN: "RECIPE DB",
+    State.RECIPE_VIEW: "RECIPE"
 }
 
 
@@ -56,12 +57,26 @@ INVENTORY = "inventory"
 LOGOUT = "logout"
 
 
+#Recipe List Commands
+SELECT = "select"
+
+
 MANAGER = RecipeManager.new_from_env()
 USER = None
 
 def displayRecipes(recipeList):
     for i in range(len(recipeList)):
         print("\t", i+1, ") ", recipeList[i].name, sep='')
+
+def select(tokens):
+    i = 0
+    try:
+        i = int(tokens[1])
+    except ValueError:
+        print("The index you provided is not an integer, please try again")
+        return
+
+    return i
 
 def search(tokens):
     termIndex = 1
@@ -144,12 +159,16 @@ loginCommands = {
     SIGNUP: signup
 }
 
+recipeListCommands = {
+    SELECT: select
+}
+
 COMMAND_SET_MAP = {
     State.INGREDIENT_LIST: {},
     State.LOGIN: loginCommands,
     State.MAIN: mainLoopCommands,
     State.RECIPE_CREATE: {},
-    State.RECIPE_LIST:{},
+    State.RECIPE_LIST: recipeListCommands,
     State.RECIPE_VIEW: {}
 }
 
@@ -255,12 +274,45 @@ def RecipeListLoop(recipeList):
         displayRecipes(recipeList)
         tokens = get_tokenized_input()
 
+        i = applyCommand(tokens)
+
+        if i != None and i >= 1 and i <= len(recipeList):
+            RecipeViewLoop(recipeList[i-1])
+
+
+    pass
+
+def RecipeViewLoop(recipe):
+    while not shouldBackOut():
+        set_program_state(State.RECIPE_VIEW)
+
+        print(recipe.name, "\n")
+        print("Author -", recipe.owner.username, "\n")
+
+        print("Servings:", recipe.servings)
+        print("Prep Time:", recipe.time, "minutes\n")
+
+        if(len(recipe.equipment) > 0):
+            print("Required Equipment:")
+            for equipment in recipe.equipment:
+                print("\t +", equipment[0])
+        else:
+            print("No required Equipment")
+
+        print("\nIngredients:")
+        ingredients = list(recipe.ingredients.keys())
+        for i in range(len(recipe.ingredients)):
+                print("\t", recipe.ingredients[ingredients[i]], ingredients[i].unit, "of", ingredients[i].iname)
+
+        print("\nDirections:")
+        steps = list(recipe.steps)
+        for i in range(len(steps)):
+            print("\t", i+1, ") ", steps[i], sep='')
+        tokens = get_tokenized_input()
+
         applyCommand(tokens)
 
-    pass
 
-def RecipeViewLoop():
-    pass
 
 def IngredientListLoop():
     pass
