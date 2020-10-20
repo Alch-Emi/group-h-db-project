@@ -36,6 +36,7 @@ HEADER_MAP = {
 QUIT = "quit"
 LOGOUT = 'logout'
 HELP = "help"
+BACK = "back"
 
 
 #Login Loop Commands
@@ -58,6 +59,9 @@ LOGOUT = "logout"
 MANAGER = RecipeManager.new_from_env()
 USER = None
 
+def displayRecipes(recipeList):
+    for i in range(len(recipeList)):
+        print("\t", i+1, ") ", recipeList[i].name, sep='')
 
 def search(tokens):
     termIndex = 1
@@ -67,18 +71,22 @@ def search(tokens):
         #TODO Search for recipes containing ingredient
     elif tokens[1] == NAME_FLAG:
         termIndex += 1
-        search_name(tokens[termIndex])
+        return search_name(tokens[termIndex])
     else:
-        search_name(tokens[termIndex])
+        return search_name(tokens[termIndex])
 
 def search_name(name):
     print("Searching Recipe DB for '" + name + "'")
-    #TODO return recipe list with given name
-    return []
+    return RecipeListLoop(list(MANAGER.searchRecipes(name)))
+
 
 def quit(tokens):
     global QUIT_REQUESTED
     QUIT_REQUESTED = True
+
+def back(tokens):
+    global BACK_OUT_REQUESTED
+    BACK_OUT_REQUESTED = True
 
 def logout(tokens):
     global LOGOUT_REQUESTED
@@ -119,7 +127,8 @@ def nothing(tokens):
 commonCommands = {
     HELP: getHelp,
     LOGOUT: logout,
-    QUIT: quit
+    QUIT: quit,
+    BACK: back
 
 }
 
@@ -167,17 +176,18 @@ def shouldBackOut():
 
 def applyCommand(tokens):
     loopCommands = COMMAND_SET_MAP[PROGRAM_STATE]
-
+    response = None
     try:
         first = tokens[0]
         if first in loopCommands:
-                loopCommands[first](tokens)
+                response = loopCommands[first](tokens)
         elif first in commonCommands:
-                commonCommands[first](tokens)
+                response = commonCommands[first](tokens)
         else:
             print("INVALID COMMAND")
     except IndexError:
         print("invalid arguments for given command")
+    return response
 
 def get_tokenized_input():
     """
@@ -237,7 +247,16 @@ def MainLoop():
 def RecipeCreateLoop():
     pass
 
-def RecipeListLoop():
+def RecipeListLoop(recipeList):
+    global PROGRAM_STATE
+
+    while not shouldBackOut():
+        set_program_state(State.RECIPE_LIST)
+        displayRecipes(recipeList)
+        tokens = get_tokenized_input()
+
+        applyCommand(tokens)
+
     pass
 
 def RecipeViewLoop():

@@ -9,6 +9,7 @@ from state import State
 
 COMMON_HELP = \
     "> help (tells you more about the current program state and commands)\n" \
+    "> back (go back to the previous page)\n" \
     "> logout (log out of current account) \n" \
     "> quit (exit the program)"
 
