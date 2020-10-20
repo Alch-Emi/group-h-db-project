@@ -27,7 +27,7 @@ class User:
     def add_owned_ingr(self, ingr_name, qty):
         self.owned_ingredients[ingr_name] = qty
 
-    def register_new_user(self, manager, username, password):
+    def register_new_user(manager, username, password):
         pass_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
 
         cur = manager.get_cursor()
@@ -57,9 +57,20 @@ class User:
         """, (self.username, self.pass_hash, self.uid))
         #TODO Handle existing user
         self.manager.commit()
+
+    def get_user_by_uid(manager, uid):
+        cur = manager.get_cursor()
+        cur.execute("""
+            SELECT username, password_hash
+            FROM users
+            WHERE uid = %s;
+        """, (uid, ))
+        user_data = cur.fetchone()
         cur.close()
 
-    def get_user(self, manager, username):
+        return User(manager, uid, user_data[0], user_data[1])
+
+    def get_user(manager, username):
         cur = manager.get_cursor()
         cur.execute("""
             SELECT uid, password_hash

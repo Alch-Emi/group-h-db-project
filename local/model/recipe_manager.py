@@ -4,7 +4,8 @@ import os
 
 import psycopg2
 
-from local.model.user import User
+from model.user import User
+from model.recipe import Recipe
 
 
 class RecipeManager:
@@ -14,40 +15,18 @@ class RecipeManager:
 
     def searchRecipes(self, name):
         cur = self.get_cursor()
-        partialName = [x.strip() for x in name.split(' ')]
+        partialName = ['%' + x.strip() + '%' for x in name.split(' ')]
         sqlQuery = "SELECT * FROM RECIPES WHERE "
         for partial in partialName:
-            sqlQuery += "rName LIKE '%" + partial + "%' OR"
-        sqlQuery = sqlQuery[:-2]
-        cur.execute(sqlQuery)
-        record = cur.fetchall()
-        return record
-
-    def getUser(self, username):
-        cur = self.get_cursor()
-        cur.execute("""
-            SELECT * FROM USERS WHERE username = %s
-            """, username)
-        record = cur.fetchall()
-        return record
-
-    def createUser(self, username, password):
-        cur = self.get_cursor()
-        p_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
-        cur.execute("""
-            INSERT INTO USER (username, passwordHash)
-            VALUES (%s, %s);
-            RETURNING uid;
-            """, (username, p_hash))
-
-        uid = cur.fetchone()[0]
-
-        self.commit()
+            sqlQuery += "rName LIKE %s OR"
+        sqlQuery = sqlQuery[:-3]
+        cur.execute(sqlQuery, partialName)
+        records = cur.fetchall()
         cur.close()
 
-        return User(self, uid, username, p_hash)
+        return (Recipe.new_from_record(self, record) for record in records)
 
-    def new_from_env(self):
+    def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])
         )

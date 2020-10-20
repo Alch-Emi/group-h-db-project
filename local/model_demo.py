@@ -106,3 +106,13 @@ if __name__ == '__main__':
     print('Steps:')
     for step in pancakes.steps:
         print(f'\t{step}')
+
+    # Display with modified servings
+    print('\n Ingredients for feeding 10 people')
+    for ingr, ammt in pancakes.changeServings(10).items():
+        print(f'\t{ingr.iname}:   {ammt} {ingr.unit}')
+
+    # Search for a recipe
+    print('\nSearch results for "cake":')
+    for recipe in man.searchRecipes('cake'):
+        print(f'\t{recipe.name}')
