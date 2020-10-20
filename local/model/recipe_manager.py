@@ -19,7 +19,7 @@ class RecipeManager:
         sqlQuery = "SELECT * FROM RECIPES WHERE "
         for partial in partialName:
             sqlQuery += "rName LIKE %s OR"
-        sqlQuery = sqlQuery[:-2]
+        sqlQuery = sqlQuery[:-3]
         cur.execute(sqlQuery, partialName)
         records = cur.fetchall()
         cur.close()
