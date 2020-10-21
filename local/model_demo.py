@@ -200,3 +200,16 @@ if __name__ == '__main__':
     for (ingr, quant) in user.owned_ingredients.items():
         print(f'\t{ingr.iname}: {quant}')
     print(f"{pancakes.name} dates made: {pancakes.dates_made()}")
+
+    # Clean up
+    user.delete()
+
+    # Clean up
+    user.delete()
+    c = man.get_cursor()
+    c.execute("""
+        DELETE FROM ingredients;
+    """)
+    c.close()
+    man.commit()
+    man.conn.close()
