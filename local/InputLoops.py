@@ -79,6 +79,21 @@ DOUBLE = "double"
 MANAGER = RecipeManager.new_from_env()
 USER = None
 
+def displayIngredients(ingredients):
+    objs = ingredients.keys()
+    storages = {}
+    for ing in objs:
+        if ing.storage_location in storages:
+            storages[ing.storage_location].append(ing)
+        else:
+            storages[ing.storage_location] = [ing]
+
+    for key in storages.keys():
+        print(key + ": ")
+        for ing in storages[key]:
+            print("\t", ingredients[ing], ing.unit, ing.iname)
+
+
 def displayRecipe(recipe):
     print(recipe.servings)
     print(recipe.steps)
@@ -231,6 +246,9 @@ def signup(tokens, optional=None):
     else:
         print("Something went wrong when creating your account. Please try a different username and/or password")
 
+def inventory(tokens, optional=None):
+    return IngredientListLoop()
+
 def compatible(tokens, optional=None):
     return RecipeListLoop([])
     # TODO
@@ -260,7 +278,7 @@ mainLoopCommands = {
     RECENT: nothing,
     COMPATIBLE: nothing,
     CREATE: nothing,
-    INVENTORY: nothing,
+    INVENTORY: inventory,
 }
 
 loginCommands = {
@@ -433,8 +451,17 @@ def RecipeViewLoop(recipe):
 
 
 
-def IngredientListLoop(ingredients):
-    pass
+def IngredientListLoop():
+    global PROGRAM_STATE
+
+    while not shouldBackOut():
+        set_program_state(State.INGREDIENT_LIST)
+
+        displayIngredients(USER.owned_ingredients)
+
+        tokens = get_tokenized_input()
+
+        applyCommand(tokens)
 
 
 def main():
