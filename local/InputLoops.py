@@ -60,8 +60,11 @@ LOGOUT = "logout"
 #Recipe List Commands
 SELECT = "select"
 
+#Recipe View Commands
+MAKE = "make"
 
-MANAGER = RecipeManager.new_from_env()
+
+MANAGER = RecipeManager.new_from_env(None)
 USER = None
 
 def displayRecipe(recipe):
@@ -119,6 +122,8 @@ def search_name(name):
     print("Searching Recipe DB for '" + name + "'")
     return RecipeListLoop(list(MANAGER.searchRecipes(name)))
 
+def make(tokens):
+    return True
 
 def quit(tokens):
     global QUIT_REQUESTED
@@ -188,13 +193,17 @@ recipeListCommands = {
     SELECT: select
 }
 
+recipeViewCommands = {
+    MAKE: make
+}
+
 COMMAND_SET_MAP = {
     State.INGREDIENT_LIST: {},
     State.LOGIN: loginCommands,
     State.MAIN: mainLoopCommands,
     State.RECIPE_CREATE: {},
     State.RECIPE_LIST: recipeListCommands,
-    State.RECIPE_VIEW: {}
+    State.RECIPE_VIEW: recipeViewCommands
 }
 
 #END OF COMMAND MAPS
@@ -210,6 +219,8 @@ def shouldBackOut():
 
     if QUIT_REQUESTED or (LOGOUT_REQUESTED and USER != None):
         return True
+    elif USER == None:
+        LOGOUT_REQUESTED = False
     elif BACK_OUT_REQUESTED:
         BACK_OUT_REQUESTED = False
         return True
@@ -305,8 +316,6 @@ def RecipeListLoop(recipeList):
             RecipeViewLoop(recipeList[i-1])
 
 
-    pass
-
 def RecipeViewLoop(recipe):
     while not shouldBackOut():
         set_program_state(State.RECIPE_VIEW)
@@ -315,7 +324,14 @@ def RecipeViewLoop(recipe):
 
         tokens = get_tokenized_input()
 
-        applyCommand(tokens)
+        response = applyCommand(tokens)
+
+        if(response):
+            if(recipe.markMade(USER)):
+                print("Recipe made successfully!")
+            else:
+                pass
+                #print("Recipe creation failed: Insufficient Ingredients")
 
 
 

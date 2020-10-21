@@ -18,7 +18,7 @@ class RecipeManager:
         partialName = ['%' + x.strip() + '%' for x in name.split(' ')]
         sqlQuery = "SELECT * FROM RECIPES WHERE "
         for partial in partialName:
-            sqlQuery += "rName LIKE %s OR"
+            sqlQuery += "rName LIKE %s OR "
         sqlQuery = sqlQuery[:-3]
         cur.execute(sqlQuery, partialName)
         records = cur.fetchall()

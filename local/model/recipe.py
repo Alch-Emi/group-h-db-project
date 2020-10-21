@@ -68,13 +68,13 @@ class Recipe:
 
     def markMade(self, user):
         cur = self.manager.get_cursor()
-        uid = user.Uid
+        uid = user.uid
         rid = self.rid
         for ingredient in self.ingredients:
             if (ingredient not in user.get_owned_ingr()) or \
                     (user.get_owned_ingr()[ingredient] - self.ingredients[ingredient] < 0):
                 print("You do not have sufficient ingredient to make this recipe")
-                return
+                return False
             user.substractOwnedIngr(ingredient, self.ingredients[ingredient])
         cur.execute("""
             INSERT INTO DATE_MADE (uid, RID, dateMade) 
@@ -82,6 +82,7 @@ class Recipe:
             """, (uid, rid, datetime.datetime.now()))
         self.manager.commit()
         cur.close()
+        return True
 
     def changeServings(self, targetServings):
         return dict(
