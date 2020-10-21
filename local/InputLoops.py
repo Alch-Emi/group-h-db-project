@@ -51,7 +51,8 @@ SEARCH = "search"
 NAME_FLAG = "-n"
 INGREDIENT_FLAG = "-i"
 
-GET = "get"
+COMPATIBLE = "compatible"
+RECENT = "recent"
 CREATE = "create"
 INVENTORY = "inventory"
 LOGOUT = "logout"
@@ -94,9 +95,12 @@ def displayRecipe(recipe):
     for i in range(len(steps)):
         print("\t", i + 1, ") ", steps[i], sep='')
 
+    # TODO dates made?
+
+
 def displayRecipeList(recipeList):
     for i in range(len(recipeList)):
-        print("\t", i+1, ") ", recipeList[i].name, sep='')
+        print("\t", i+1, ") ", recipeList[i].name, " - ", recipeList[i].owner.username, sep='')
 
 def halveRecipe(tokens, recipe):
     newServings = recipe.servings/2
@@ -198,7 +202,8 @@ commonCommands = {
 
 mainLoopCommands = {
     SEARCH: search,
-    GET: nothing,
+    RECENT: nothing,
+    COMPATIBLE: nothing,
     CREATE: nothing,
     INVENTORY: nothing,
 }
