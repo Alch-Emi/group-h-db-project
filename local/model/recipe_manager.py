@@ -19,14 +19,14 @@ class RecipeManager:
         sqlQuery = "SELECT * FROM RECIPES WHERE "
         for partial in partialName:
             sqlQuery += "rName LIKE %s OR "
-        sqlQuery = sqlQuery[:-3]
+        sqlQuery = sqlQuery[:-4] + ';'
         cur.execute(sqlQuery, partialName)
         records = cur.fetchall()
         cur.close()
 
         return (Recipe.new_from_record(self, record) for record in records)
 
-    def new_from_env(self):
+    def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])
         )
