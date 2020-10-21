@@ -67,12 +67,20 @@ HALVE = "halve"
 DOUBLE = "double"
 
 
-MANAGER = RecipeManager.new_from_env(None)
+MANAGER = RecipeManager.new_from_env()
 USER = None
 
 def displayRecipe(recipe):
+    print(recipe.servings)
+    print(recipe.steps)
+    print(recipe.equipment)
+    print(recipe.time)
+    print(recipe.ingredients)
+
+    return
+
     print(recipe.name, "\n")
-    print("Author -", recipe.owner.username, "\n")
+    print("Author -", recipe.owner.username if recipe.owner else "Unknown", "\n")
 
     print("Servings:", recipe.servings)
     print("Prep Time:", recipe.time, "minutes\n")
@@ -100,7 +108,14 @@ def displayRecipe(recipe):
 
 def displayRecipeList(recipeList):
     for i in range(len(recipeList)):
-        print("\t", i+1, ") ", recipeList[i].name, " - ", recipeList[i].owner.username, sep='')
+        owner = recipeList[i].owner
+        author = " - "
+        if(owner != None):
+            author += owner.username
+        else:
+            author = ""
+
+        print("\t", i+1, ") ", recipeList[i].name, author, sep='')
 
 def halveRecipe(tokens, recipe):
     newServings = recipe.servings/2
@@ -166,7 +181,8 @@ def login(tokens, optional=None):
     global USER
 
     account = User.get_user(MANAGER, tokens[1])
-    if(account.check_password(tokens[2])):
+
+    if(account != None and account.check_password(tokens[2])):
         print(f"Welcome, {tokens[1]}")
         USER = account
         return MainLoop()
