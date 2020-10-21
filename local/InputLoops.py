@@ -64,7 +64,32 @@ SELECT = "select"
 MANAGER = RecipeManager.new_from_env()
 USER = None
 
-def displayRecipes(recipeList):
+def displayRecipe(recipe):
+    print(recipe.name, "\n")
+    print("Author -", recipe.owner.username, "\n")
+
+    print("Servings:", recipe.servings)
+    print("Prep Time:", recipe.time, "minutes\n")
+
+    if (len(recipe.equipment) > 0):
+        print("Required Equipment:")
+        for equipment in recipe.equipment:
+            print("\t +", equipment[0])
+    else:
+        print("No required Equipment")
+
+    print("\nIngredients:")
+    ingredients = list(recipe.ingredients.keys())
+    for i in range(len(recipe.ingredients)):
+        print("\t", recipe.ingredients[ingredients[i]], ingredients[i].unit,
+              "of", ingredients[i].iname)
+
+    print("\nDirections:")
+    steps = list(recipe.steps)
+    for i in range(len(steps)):
+        print("\t", i + 1, ") ", steps[i], sep='')
+
+def displayRecipeList(recipeList):
     for i in range(len(recipeList)):
         print("\t", i+1, ") ", recipeList[i].name, sep='')
 
@@ -271,7 +296,7 @@ def RecipeListLoop(recipeList):
 
     while not shouldBackOut():
         set_program_state(State.RECIPE_LIST)
-        displayRecipes(recipeList)
+        displayRecipeList(recipeList)
         tokens = get_tokenized_input()
 
         i = applyCommand(tokens)
@@ -286,28 +311,8 @@ def RecipeViewLoop(recipe):
     while not shouldBackOut():
         set_program_state(State.RECIPE_VIEW)
 
-        print(recipe.name, "\n")
-        print("Author -", recipe.owner.username, "\n")
+        displayRecipe(recipe)
 
-        print("Servings:", recipe.servings)
-        print("Prep Time:", recipe.time, "minutes\n")
-
-        if(len(recipe.equipment) > 0):
-            print("Required Equipment:")
-            for equipment in recipe.equipment:
-                print("\t +", equipment[0])
-        else:
-            print("No required Equipment")
-
-        print("\nIngredients:")
-        ingredients = list(recipe.ingredients.keys())
-        for i in range(len(recipe.ingredients)):
-                print("\t", recipe.ingredients[ingredients[i]], ingredients[i].unit, "of", ingredients[i].iname)
-
-        print("\nDirections:")
-        steps = list(recipe.steps)
-        for i in range(len(steps)):
-            print("\t", i+1, ") ", steps[i], sep='')
         tokens = get_tokenized_input()
 
         applyCommand(tokens)
