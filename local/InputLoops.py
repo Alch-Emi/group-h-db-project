@@ -182,7 +182,13 @@ def signup(tokens, optional=None):
     else:
         print("Something went wrong when creating your account. Please try a different username and/or password")
 
+def compatible(tokens, optional=None):
+    return RecipeListLoop([])
+    # TODO
 
+def recent(tokens, optional=None):
+    return RecipeListLoop([])
+    # TODO
 
 def getHelp(tokens, optional=None):
     print(help.HELP_MESSAGE_MAP[PROGRAM_STATE])
