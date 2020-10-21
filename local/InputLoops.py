@@ -62,6 +62,8 @@ SELECT = "select"
 
 #Recipe View Commands
 MAKE = "make"
+HALVE = "halve"
+DOUBLE = "double"
 
 
 MANAGER = RecipeManager.new_from_env(None)
@@ -95,6 +97,17 @@ def displayRecipe(recipe):
 def displayRecipeList(recipeList):
     for i in range(len(recipeList)):
         print("\t", i+1, ") ", recipeList[i].name, sep='')
+
+def halveRecipe(tokens, recipe):
+    newServings = recipe.servings/2
+    recipe.ingredients = recipe.changeServings(newServings)
+    recipe.servings = newServings
+
+def doubleRecipe(tokens, recipe):
+    newServings = 2*recipe.servings
+    recipe.ingredients = recipe.changeServings(newServings)
+    recipe.servings = newServings
+
 
 def select(tokens, optional = None):
     i = 0
@@ -200,7 +213,9 @@ recipeListCommands = {
 }
 
 recipeViewCommands = {
-    MAKE: make
+    MAKE: make,
+    HALVE: halveRecipe,
+    DOUBLE: doubleRecipe
 }
 
 COMMAND_SET_MAP = {
