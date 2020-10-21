@@ -57,6 +57,15 @@ def init_database(conn):
             FOREIGN KEY(iname) REFERENCES ingredients(iname),
             PRIMARY KEY(rid, iname)
         );
+
+        CREATE TABLE IF NOT EXISTS dates_made(
+            id              SERIAL      PRIMARY KEY,
+            uid             INT         NOT NULL,
+            rid             INT         NOT NULL,
+            dateMade        TIMESTAMP   NOT NULL DEFAULT NOW(),
+            FOREIGN KEY(uid) REFERENCES users(uid),
+            FOREIGN KEY(rid) REFERENCES recipes(rid)
+        );
     """)
     conn.commit()
     cursor.close()

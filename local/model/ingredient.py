@@ -5,6 +5,12 @@ class Ingredient:
         self.unit = unit
         self.storage_location = storage_location
 
+    def __eq__(self, other):
+        return self.iname == other.iname
+
+    def __hash__(self):
+        return hash(self.iname)
+
     def register_ingredient(manager, name, unit, storage_location):
         cur = manager.get_cursor()
         cur.execute("""

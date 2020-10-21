@@ -192,3 +192,11 @@ if __name__ == '__main__':
     print(f"\n{user.username}'s Inventory:")
     for (ingr, quant) in user.owned_ingredients.items():
         print(f'\t{ingr.iname}: {quant}')
+
+    # Mark pancakes as made
+    pancakes.mark_made(user)
+    print(f"{user.username} just made {pancakes.name}")
+    print(f"\n{user.username}'s Inventory:")
+    for (ingr, quant) in user.owned_ingredients.items():
+        print(f'\t{ingr.iname}: {quant}')
+    print(f"{pancakes.name} dates made: {pancakes.dates_made()}")
