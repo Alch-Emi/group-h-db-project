@@ -2,7 +2,11 @@ from model import RecipeManager, User, Ingredient, Recipe
 
 if __name__ == '__main__':
     # Create RecipeManager
-    man = RecipeManager.new_from_env()
+    try:
+        man = RecipeManager.new_from_env()
+    except KeyError:
+        print("Make sure you set $DATABASE to a database url, like user:pass@host:port/db")
+        exit(1)
 
     # Clean out database (for demo only)
     old_thea = User.get_user(man, 'thea')
