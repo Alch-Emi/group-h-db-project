@@ -26,7 +26,7 @@ class RecipeManager:
 
         return (Recipe.new_from_record(self, record) for record in records)
 
-    def new_from_env(self):
+    def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])
         )
