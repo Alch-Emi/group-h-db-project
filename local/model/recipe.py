@@ -192,3 +192,15 @@ class Recipe:
         """, (self.rid, len(self.steps)))
 
         self.manager.commit()
+
+    def delete(self):
+        cur = self.manager.get_cursor()
+
+        cur.execute("""
+            DELETE FROM steps WHERE rid = %s;
+            DELETE FROM requires_equipment WHERE rid = %s;
+            DELETE FROM requires_ingredient WHERE rid = %s;
+            DELETE FROM recipes WHERE rid = %s;
+        """, [self.rid] * 4)
+        self.manager.commit()
+        cur.close()

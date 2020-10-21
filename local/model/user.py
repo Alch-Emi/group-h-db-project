@@ -85,6 +85,44 @@ class User:
     def check_password(self, password):
         return bcrypt.checkpw(password.encode(), self.pass_hash.encode())
 
+    def delete(self):
+        cur = self.manager.get_cursor()
+
+        cur.execute("""
+            DELETE FROM steps
+            WHERE rid IN (
+                SELECT rid
+                FROM recipes
+                WHERE owner_id = %s
+            );
+
+            DELETE FROM requires_equipment
+            WHERE rid IN (
+                SELECT rid
+                FROM recipes
+                WHERE owner_id = %s
+            );
+
+            DELETE FROM requires_ingredient
+            WHERE rid IN (
+                SELECT rid
+                FROM recipes
+                WHERE owner_id = %s
+            );
+
+            DELETE FROM recipes
+            WHERE owner_id = %s;
+
+            DELETE FROM ingredient_ownership
+            WHERE uid = %s;
+
+            DELETE FROM users
+            WHERE uid = %s;
+        """, [self.uid] * 6)
+
+        self.manager.commit()
+        cur.close()
+
     # Requires a call to save() still
     def change_password(self, new_pass):
         self.pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode()

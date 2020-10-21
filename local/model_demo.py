@@ -5,12 +5,11 @@ if __name__ == '__main__':
     man = RecipeManager.new_from_env()
 
     # Clean out database (for demo only)
+    old_thea = User.get_user(man, 'thea')
+    if old_thea != None:
+        old_thea.delete()
     c = man.get_cursor()
     c.execute("""
-        DELETE FROM recipes WHERE rname = 'Pancakes!';
-        DELETE FROM users WHERE username = 'thea';
-
-        DELETE FROM requires_ingredient;
         DELETE FROM ingredients;
     """)
     c.close()
@@ -116,3 +115,59 @@ if __name__ == '__main__':
     print('\nSearch results for "cake":')
     for recipe in man.searchRecipes('cake'):
         print(f'\t{recipe.name}')
+
+    # Create a new recipe for the delete demo
+    sugar_water = Recipe.register_recipe(
+        man,
+        'Sugar Water',
+        1,
+        2,
+        [],
+        user,
+        {
+            water: 2,
+            sugar: 2,
+        },
+        [
+            'Combine  ingredients & mix'
+        ]
+    )
+    in_database = len(list(man.searchRecipes("Sugar"))) > 0;
+    print(f"\nSugar water successfully created: {in_database}")
+
+    # Delete recipe
+    sugar_water.delete()
+    in_database = len(list(man.searchRecipes("Sugar"))) > 0;
+    print(f"Sugar water successfully deleted: {not in_database}")
+
+    # Create a new user with one recipe
+    new_user = User.register_new_user(man, "min", "haha i know min's password")
+    sugar_water = Recipe.register_recipe(
+        man,
+        'Sugar Water',
+        1,
+        2,
+        [],
+        new_user,
+        {
+            water: 2,
+            sugar: 2,
+        },
+        [
+            'Combine  ingredients & mix'
+        ]
+    )
+    min_exists = User.get_user(man, "min") != None
+    print(f"User min created: {min_exists}")
+    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0;
+    print(f"Sugar water created for min: {sugar_water_exists}")
+    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
+    print(f"Pancakes still exist: {pancakes_exist}")
+    print("Deleting min...")
+    new_user.delete()
+    min_exists = User.get_user(man, "min") != None
+    print(f"User min exists: {min_exists}")
+    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0;
+    print(f"Sugar water exists: {sugar_water_exists}")
+    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
+    print(f"Pancakes still exist: {pancakes_exist}")
