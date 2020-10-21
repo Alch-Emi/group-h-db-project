@@ -42,7 +42,7 @@ class Ingredient:
         data = cur.fetchone()
         cur.close()
 
-        return Ingredient(manager, iname, data[0], data[1])
+        return Ingredient(manager, iname, data[0], data[1]) if data != None else None
 
     def list_all_ingredients(manager):
         cur = manager.get_cursor()
