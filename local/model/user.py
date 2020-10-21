@@ -97,7 +97,7 @@ class User:
         user_data = cur.fetchone()
         cur.close()
 
-        return User(manager, uid, user_data[0], user_data[1], None)
+        return User(manager, uid, user_data[0], user_data[1], None) if user_data != None else None
 
     def get_user(manager, username):
         cur = manager.get_cursor()
