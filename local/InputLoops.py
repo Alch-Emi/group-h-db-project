@@ -4,8 +4,8 @@
 File that defines all input collection/input loop logic
 """
 
-from recipe_manager import RecipeManager
-from user import User
+from model.recipe_manager import RecipeManager
+from model.user import User
 
 import help
 from state import State
