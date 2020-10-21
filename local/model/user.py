@@ -80,7 +80,7 @@ class User:
         user_data = cur.fetchone()
         cur.close()
 
-        return User(manager, user_data[0], username, user_data[1])
+        return User(manager, user_data[0], username, user_data[1]) if user_data != None else None
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode(), self.pass_hash.encode())
