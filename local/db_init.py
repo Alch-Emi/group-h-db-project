@@ -36,7 +36,7 @@ def init_database(conn):
         CREATE TABLE IF NOT EXISTS ingredient_ownership(
             uid             INT         NOT NULL,
             iname           VARCHAR(50) NOT NULL,
-            qtyOwned        INT         NOT NULL,
+            qtyOwned        REAL        NOT NULL,
             FOREIGN KEY(uid) REFERENCES users(uid),
             FOREIGN KEY(iname) REFERENCES ingredients(iname),
             PRIMARY KEY(uid, iname)
@@ -52,10 +52,19 @@ def init_database(conn):
         CREATE TABLE IF NOT EXISTS requires_ingredient(
             rid             INT         NOT NULL,
             iname           VARCHAR(50) NOT NULL,
-            amount          INT         NOT NULL,
+            amount          REAL        NOT NULL,
             FOREIGN KEY(rid) REFERENCES recipes(rid),
             FOREIGN KEY(iname) REFERENCES ingredients(iname),
             PRIMARY KEY(rid, iname)
+        );
+
+        CREATE TABLE IF NOT EXISTS dates_made(
+            id              SERIAL      PRIMARY KEY,
+            uid             INT         NOT NULL,
+            rid             INT         NOT NULL,
+            dateMade        TIMESTAMP   NOT NULL DEFAULT NOW(),
+            FOREIGN KEY(uid) REFERENCES users(uid),
+            FOREIGN KEY(rid) REFERENCES recipes(rid)
         );
     """)
     conn.commit()

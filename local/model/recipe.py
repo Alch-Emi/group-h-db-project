@@ -59,30 +59,34 @@ class Recipe:
             steps
         )
 
-    def datesMade(self):
+    def dates_made(self):
         cur = self.manager.get_cursor()
-        rid = self.id
-        cur.execute("SELECT dateMade FROM DATE_MADE WHERE RID = %s", rid)
+        rid = self.rid
+        cur.execute("SELECT dateMade FROM dates_made WHERE rid = %s", (rid,))
         record = cur.fetchall()
         return record
 
-    def markMade(self, user):
+    def mark_made(self, user):
         cur = self.manager.get_cursor()
-        uid = user.uid
-        rid = self.rid
-        for ingredient in self.ingredients:
-            if (ingredient not in user.get_owned_ingr()) or \
-                    (user.get_owned_ingr()[ingredient] - self.ingredients[ingredient] < 0):
-                print("You do not have sufficient ingredient to make this recipe")
-                return False
-            user.substractOwnedIngr(ingredient, self.ingredients[ingredient])
         cur.execute("""
-            INSERT INTO DATE_MADE (uid, RID, dateMade) 
-            VALUES (%s, %s, %s);
-            """, (uid, rid, datetime.datetime.now()))
+            INSERT INTO dates_made (uid, rid)
+            VALUES (%s, %s);
+
+            UPDATE ingredient_ownership
+            SET qtyowned = GREATEST(0, qtyowned - requires_ingredient.amount)
+            FROM requires_ingredient
+            WHERE
+                rid = %s
+                AND uid = %s
+                AND requires_ingredient.iname = ingredient_ownership.iname
+            RETURNING ingredient_ownership.iname, qtyowned;
+        """, (user.uid, self.rid, self.rid, user.uid))
         self.manager.commit()
+
+        for (iname, amount) in cur:
+            user.owned_ingredients[Ingredient(None, iname, None, None)] = amount
+
         cur.close()
-        return True
 
     def changeServings(self, targetServings):
         return dict(

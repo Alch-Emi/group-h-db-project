@@ -1,15 +1,29 @@
 import bcrypt
+from psycopg2.extras import execute_values
+from model.ingredient import Ingredient
 
 class User:
-    def __init__(self, manager, uid, username, pass_hash):
+    # If owned_ingredients is set to None, it will be populated from the database
+    def __init__(self, manager, uid, username, pass_hash, owned_ingredients):
         self.manager = manager
         self.uid = uid
         self.username = username
         self.pass_hash = pass_hash
-        self.owned_ingredients = {}
 
-    def substractOwnedIngr(self, ingr_name, qty_used):
-        self.owned_ingredients[ingr_name] -= qty_used
+        if owned_ingredients == None:
+            cur = self.manager.get_cursor()
+            cur.execute("""
+                SELECT iname,qtyowned
+                FROM ingredient_ownership
+                WHERE uid = %s;
+            """, (self.uid,))
+            owned_ingredients = dict(
+                (Ingredient.get_ingredient(manager, record[0]), record[1])
+                for record in cur
+            )
+            cur.close()
+
+        self.owned_ingredients = owned_ingredients
 
     def listDatesMade(self, recipe):
         cur = self.manager.get_cursor()
@@ -20,12 +34,6 @@ class User:
             """, uid, rid)
         record = cur.fetchall()
         return record
-
-    def get_owned_ingr(self):
-        return self.owned_ingredients
-
-    def add_owned_ingr(self, ingr_name, qty):
-        self.owned_ingredients[ingr_name] = qty
 
     def register_new_user(manager, username, password):
         pass_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
@@ -43,7 +51,7 @@ class User:
         manager.commit()
         cur.close()
 
-        return User(manager, uid, username, pass_hash)
+        return User(manager, uid, username, pass_hash, {})
 
     def save(self):
         cur = self.manager.get_cursor()
@@ -58,6 +66,27 @@ class User:
         #TODO Handle existing user
         self.manager.commit()
 
+    def save_owned_ingredients(self):
+        cur = self.manager.get_cursor()
+        cur.execute("""
+            BEGIN;
+
+            DELETE FROM ingredient_ownership
+            WHERE uid = %s;
+        """, (self.uid,))
+
+        execute_values(cur, """
+            INSERT INTO ingredient_ownership
+            VALUES %s;
+
+            COMMIT;
+        """, (
+            (self.uid, ingr.iname, quant)
+            for (ingr, quant) in self.owned_ingredients.items()
+        ))
+        self.manager.commit()
+        cur.close()
+
     def get_user_by_uid(manager, uid):
         cur = manager.get_cursor()
         cur.execute("""
@@ -68,7 +97,7 @@ class User:
         user_data = cur.fetchone()
         cur.close()
 
-        return User(manager, uid, user_data[0], user_data[1])
+        return User(manager, uid, user_data[0], user_data[1], None) if user_data != None else None
 
     def get_user(manager, username):
         cur = manager.get_cursor()
@@ -80,7 +109,7 @@ class User:
         user_data = cur.fetchone()
         cur.close()
 
-        return User(manager, user_data[0], username, user_data[1]) if user_data != None else None
+        return User(manager, user_data[0], username, user_data[1], None) if user_data != None else None
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode(), self.pass_hash.encode())

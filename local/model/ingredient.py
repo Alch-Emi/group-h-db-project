@@ -5,6 +5,12 @@ class Ingredient:
         self.unit = unit
         self.storage_location = storage_location
 
+    def __eq__(self, other):
+        return self.iname == other.iname
+
+    def __hash__(self):
+        return hash(self.iname)
+
     def register_ingredient(manager, name, unit, storage_location):
         cur = manager.get_cursor()
         cur.execute("""
@@ -42,7 +48,7 @@ class Ingredient:
         data = cur.fetchone()
         cur.close()
 
-        return Ingredient(manager, iname, data[0], data[1])
+        return Ingredient(manager, iname, data[0], data[1]) if data != None else None
 
     def list_all_ingredients(manager):
         cur = manager.get_cursor()

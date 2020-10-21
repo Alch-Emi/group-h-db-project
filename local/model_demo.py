@@ -2,7 +2,11 @@ from model import RecipeManager, User, Ingredient, Recipe
 
 if __name__ == '__main__':
     # Create RecipeManager
-    man = RecipeManager.new_from_env()
+    try:
+        man = RecipeManager.new_from_env()
+    except KeyError:
+        print("Make sure you set $DATABASE to a database url, like user:pass@host:port/db")
+        exit(1)
 
     # Clean out database (for demo only)
     old_thea = User.get_user(man, 'thea')
@@ -163,6 +167,8 @@ if __name__ == '__main__':
     print(f"Sugar water created for min: {sugar_water_exists}")
     pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
     print(f"Pancakes still exist: {pancakes_exist}")
+
+    # Delete the new user (and consiquently all their recipes)
     print("Deleting min...")
     new_user.delete()
     min_exists = User.get_user(man, "min") != None
@@ -171,3 +177,39 @@ if __name__ == '__main__':
     print(f"Sugar water exists: {sugar_water_exists}")
     pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
     print(f"Pancakes still exist: {pancakes_exist}")
+
+    # Add some ingredients to a user's supply
+    user.owned_ingredients = {
+        flour: 20,
+        water: 999,
+        sugar: 10,
+        baking_pow: 0,
+        salt: 500,
+        oil: 500
+    }
+    user.owned_ingredients[baking_pow] += 50 # Just bought some baking powder
+    user.save_owned_ingredients() # VERY IMPORTANT, MAKE SURE YOU CALL THIS
+    print(f"\n{user.username}'s Inventory:")
+    for (ingr, quant) in user.owned_ingredients.items():
+        print(f'\t{ingr.iname}: {quant}')
+
+    # Mark pancakes as made
+    pancakes.mark_made(user)
+    print(f"{user.username} just made {pancakes.name}")
+    print(f"\n{user.username}'s Inventory:")
+    for (ingr, quant) in user.owned_ingredients.items():
+        print(f'\t{ingr.iname}: {quant}')
+    print(f"{pancakes.name} dates made: {pancakes.dates_made()}")
+
+    # Clean up
+    user.delete()
+
+    # Clean up
+    user.delete()
+    c = man.get_cursor()
+    c.execute("""
+        DELETE FROM ingredients;
+    """)
+    c.close()
+    man.commit()
+    man.conn.close()
