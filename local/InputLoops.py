@@ -293,7 +293,7 @@ COMMAND_SET_MAP = {
     State.INGREDIENT_LIST: {},
     State.LOGIN: loginCommands,
     State.MAIN: mainLoopCommands,
-    State.RECIPE_CREATE: {},
+    State.RECIPE_CREATE: recipeCreateCommands,
     State.RECIPE_LIST: recipeListCommands,
     State.RECIPE_VIEW: recipeViewCommands
 }
