@@ -96,7 +96,7 @@ def displayRecipeList(recipeList):
     for i in range(len(recipeList)):
         print("\t", i+1, ") ", recipeList[i].name, sep='')
 
-def select(tokens):
+def select(tokens, optional = None):
     i = 0
     try:
         i = int(tokens[1])
@@ -106,7 +106,7 @@ def select(tokens):
 
     return i
 
-def search(tokens):
+def search(tokens, optional = None):
     termIndex = 1
     if tokens[1] == INGREDIENT_FLAG:
         termIndex += 1
@@ -122,24 +122,30 @@ def search_name(name):
     print("Searching Recipe DB for '" + name + "'")
     return RecipeListLoop(list(MANAGER.searchRecipes(name)))
 
-def make(tokens):
+def make(tokens, optional=None):
+
+    if(optional):
+        if(optional.markMade(USER)):
+            print("recipe made successfully!")
+    else:
+        return False
     return True
 
-def quit(tokens):
+def quit(tokens, optional=None):
     global QUIT_REQUESTED
     QUIT_REQUESTED = True
 
-def back(tokens):
+def back(tokens, optional=None):
     global BACK_OUT_REQUESTED
     BACK_OUT_REQUESTED = True
 
-def logout(tokens):
+def logout(tokens, optional=None):
     global LOGOUT_REQUESTED
     LOGOUT_REQUESTED = True
 
     print(f"Farewell, {USER.username}")
 
-def login(tokens):
+def login(tokens, optional=None):
     global USER
 
     account = User.get_user(MANAGER, tokens[1])
@@ -150,7 +156,7 @@ def login(tokens):
     else:
         print("Invalid username or password. Please try again.")
 
-def signup(tokens):
+def signup(tokens, optional=None):
     account = User.register_new_user(MANAGER, tokens[1], tokens[2])
     if(account):
         print(f"Account successfully created. You are now signed in as {tokens[1]}")
@@ -161,11 +167,11 @@ def signup(tokens):
 
 
 
-def getHelp(tokens):
+def getHelp(tokens, optional=None):
     print(help.HELP_MESSAGE_MAP[PROGRAM_STATE])
     print(help.COMMON_HELP)
 
-def nothing(tokens):
+def nothing(tokens, optional=None):
     pass
 
 #COMMAND MAPS
@@ -229,20 +235,26 @@ def shouldBackOut():
 
 
 
-def applyCommand(tokens):
+def applyCommand(tokens, optional = None):
     loopCommands = COMMAND_SET_MAP[PROGRAM_STATE]
-    response = None
+    func = None
     try:
         first = tokens[0]
         if first in loopCommands:
-                response = loopCommands[first](tokens)
+                func = loopCommands[first]
         elif first in commonCommands:
-                response = commonCommands[first](tokens)
+                func = commonCommands[first]
         else:
             print("INVALID COMMAND")
     except IndexError:
         print("invalid arguments for given command")
-    return response
+    ans = None
+    if func != None:
+        if optional == None:
+            ans = func(tokens)
+        else:
+            ans = func(tokens, optional)
+    return ans
 
 def get_tokenized_input():
     """
@@ -324,18 +336,12 @@ def RecipeViewLoop(recipe):
 
         tokens = get_tokenized_input()
 
-        response = applyCommand(tokens)
-
-        if(response):
-            if(recipe.markMade(USER)):
-                print("Recipe made successfully!")
-            else:
-                pass
-                #print("Recipe creation failed: Insufficient Ingredients")
+        response = applyCommand(tokens, recipe)
 
 
 
-def IngredientListLoop():
+
+def IngredientListLoop(ingredients):
     pass
 
 
