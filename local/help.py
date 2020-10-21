@@ -37,7 +37,7 @@ RECIPE_LIST_HELP = \
     "> done (returns to main menu)\n"
 
 RECIPE_CREATE_HELP = \
-    "> prep 'time in minutes' (updates the time required to prep)\n" \
+    "> time 'time in minutes' (updates the time required to make the recipe)\n" \
     "> servings 'number of servings' (updates the number of servings made and required ingredient amounts)\n" \
     "> addStep 'step number' 'description' (adds new step to recipe)\n" \
     "> editStep 'step number' 'description' (updates description of given step)\n" \

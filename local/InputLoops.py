@@ -57,6 +57,15 @@ CREATE = "create"
 INVENTORY = "inventory"
 LOGOUT = "logout"
 
+#Recipe Create Commands
+TIME = "time"
+SERVINGS = "servings"
+ADD_STEP = "addStep"
+EDIT_STEP = "editStep"
+ADD_INGREDIENT = "addIngredient"
+DELETE_INGREDIENT = "deleteIngredient"
+ADD_EQUIPMENT = "addEquipment"
+REMOVE_EQUIPMENT = "removeEquipment"
 
 #Recipe List Commands
 SELECT = "select"
@@ -163,6 +172,30 @@ def make(tokens, optional=None):
         return False
     return True
 
+def time(tokens):
+    pass
+
+def servings(tokens):
+    pass
+
+def addStep(tokens):
+    pass
+
+def editStep(tokens):
+    pass
+
+def addIngredient(tokens):
+    pass
+
+def deleteIngredient(tokens):
+    pass
+
+def addEquipment(tokens):
+    pass
+
+def removeEquipment(tokens):
+    pass
+
 def quit(tokens, optional=None):
     global QUIT_REQUESTED
     QUIT_REQUESTED = True
@@ -233,6 +266,17 @@ mainLoopCommands = {
 loginCommands = {
     LOGIN: login,
     SIGNUP: signup
+}
+
+recipeCreateCommands = {
+    TIME: time,
+    SERVINGS: servings,
+    ADD_STEP: addStep,
+    EDIT_STEP: editStep,
+    ADD_INGREDIENT: addIngredient,
+    DELETE_INGREDIENT: deleteIngredient,
+    ADD_EQUIPMENT: addEquipment,
+    REMOVE_EQUIPMENT: removeEquipment
 }
 
 recipeListCommands = {
@@ -354,7 +398,13 @@ def MainLoop():
         applyCommand(tokens)
 
 def RecipeCreateLoop():
-    pass
+    global PROGRAM_STATE
+
+    while not shouldBackOut():
+        set_program_state(State.RECIPE_CREATE)
+        tokens = get_tokenized_input()
+
+        applyCommand(tokens)
 
 def RecipeListLoop(recipeList):
     global PROGRAM_STATE
