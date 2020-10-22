@@ -4,8 +4,8 @@ import os
 
 import psycopg2
 
-from model.user import User
-from model.recipe import Recipe
+from model.user import *
+from model.recipe import *
 
 
 class RecipeManager:

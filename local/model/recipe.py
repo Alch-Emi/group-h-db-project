@@ -3,8 +3,8 @@ import uuid
 
 from psycopg2.extras import execute_values
 
-from model.ingredient import Ingredient
-from model.user import User
+from model.ingredient import *
+from model import user
 
 class Recipe:
     def __init__(self, manager, rid, servings, time, name, equip, owner, ingr, steps):
@@ -44,7 +44,7 @@ class Recipe:
         cur.close()
 
         # Retrieve owner
-        owner = User.get_user_by_uid(manager, record[4])
+        owner = user.User.get_user_by_uid(manager, record[4])
 
         # Produce recipe
         return Recipe(
