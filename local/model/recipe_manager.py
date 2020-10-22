@@ -26,7 +26,7 @@ class RecipeManager:
 
         return (Recipe.new_from_record(self, record) for record in records)
 
-    def recent_recipes(self, limit = 5):
+    def recent_recipes(self, user = None, limit = 5):
         cur = self.get_cursor()
         cur.execute("""
             SELECT
@@ -34,10 +34,20 @@ class RecipeManager:
                 MAX(datemade) as last_date
             FROM recipes
             JOIN dates_made ON recipes.rid = dates_made.rid
+            %%%
             GROUP BY recipes.rid
             ORDER BY last_date DESC
             LIMIT %s;
-        """, (limit,))
+        """
+        .replace('%%%', (
+            'WHERE uid = %s'
+            if user != None
+            else ''
+        )), (
+            (limit,)
+            if user == None
+            else (user.uid, limit)
+        ))
 
         results = (Recipe.new_from_record(self, record) for record in cur.fetchall())
         cur.close()

@@ -12,9 +12,26 @@ if __name__ == '__main__':
     old_thea = User.get_user(man, 'thea')
     if old_thea != None:
         old_thea.delete()
+    old_min = User.get_user(man, 'min')
+    if old_min != None:
+        old_min.delete()
     c = man.get_cursor()
     c.execute("""
-        DELETE FROM ingredients;
+        DELETE FROM ingredients
+        WHERE iname in (
+            'Flour',
+            'Water',
+            'Sugar',
+            'Baking Powder',
+            'Salt',
+            'Oil',
+            'Brown Sugar',
+            'Almond Milk',
+            'Vanilla',
+            'Baking Soda',
+            'Chocolate Chips',
+            'Rice'
+        );
     """)
     c.close()
 
@@ -155,6 +172,8 @@ if __name__ == '__main__':
     print('\nRecipes:')
     for recipe in [pancakes, cookies, rice]:
         print(f'\t{recipe.name}')
+        equipment_list = ', '.join(recipe.equipment)
+        print(f'\t\tEquipment: {equipment_list}')
         print('\t\tIngredients:')
         for ingr, ammt in recipe.ingredients.items():
             print(f'\t\t\t{ingr.iname}:   {ammt} {ingr.unit}')
@@ -255,6 +274,7 @@ if __name__ == '__main__':
 
     # Get recent recipes
     # Set up: Create a bunch of demo recipes, and prepare them in order
+    user_min = User.register_new_user(man, "min", "haha i know min's password")
     demo_recipes = [
         Recipe.register_recipe(man, f"Demo Recipe {n}", 1, 2, [], user, {}, [])
         for n in range(0,4)
@@ -262,12 +282,20 @@ if __name__ == '__main__':
     for r in demo_recipes:
         r.mark_made(user)
         print(f'{user.username} made recipe {r.name}')
-    demo_recipes[0].mark_made(user)
-    print(f'{user.username} made recipe {demo_recipes[0].name}')
+    demo_recipes[0].mark_made(user_min)
+    print(f'{user_min.username} made recipe {demo_recipes[0].name}')
+
     # Get 3 most recent recipes
     recents = man.recent_recipes(limit = 3)
     # Display
     print("The three most recently made recipes are:")
+    for r in recents:
+        print(f'\t{r.name}')
+
+    # Get 3 most recent recipes for a specific user
+    recents = man.recent_recipes(limit = 3, user = user)
+    # Display
+    print(f"{user.username} recently made:")
     for r in recents:
         print(f'\t{r.name}')
 
@@ -280,9 +308,24 @@ if __name__ == '__main__':
 
     # Clean up
     user.delete()
+    user_min.delete()
     c = man.get_cursor()
     c.execute("""
-        DELETE FROM ingredients;
+        DELETE FROM ingredients
+        WHERE iname in (
+            'Flour',
+            'Water',
+            'Sugar',
+            'Baking Powder',
+            'Salt',
+            'Oil',
+            'Brown Sugar',
+            'Almond Milk',
+            'Vanilla',
+            'Baking Soda',
+            'Chocolate Chips',
+            'Rice'
+        );
     """)
     c.close()
     man.commit()
