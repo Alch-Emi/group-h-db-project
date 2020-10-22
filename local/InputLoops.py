@@ -345,14 +345,7 @@ def deleteIngredient(tokens, recipe):
     :param recipe: The recipe an ingredient is being deleted from
     :return:
     """
-    ing = tokens[1]
-    try:
-        recipe.ingredients.remove(ing)
-    except(ValueError):
-        print("Failure to delete ingredient, recipe does not contain ingredient name")
-        return
-
-    print(ing + " deleted successfully")
+    pass
 
 def addEquipment(tokens, recipe):
     """
