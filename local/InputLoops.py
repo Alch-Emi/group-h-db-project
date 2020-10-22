@@ -270,6 +270,7 @@ def time(tokens, recipe):
         except:
             print("Failure to add time, value not a number")
             return
+
     recipe.time = timeReq
     print("recipe time added successfully")
 
@@ -288,6 +289,7 @@ def servings(tokens, recipe):
         except:
             print("Failure to add servings, value not a number")
             return
+
     recipe.servings = serv
     print("servings added successfully")
 
@@ -303,7 +305,9 @@ def addStep(tokens, recipe):
     except(ValueError):
         print("Failure to add step, stepNum not an integer")
         return
+
     recipe.steps[num] = tokens[2]
+    print("Step " + num + " added successfully")
 
 def editStep(tokens, recipe):
     """
@@ -317,6 +321,7 @@ def editStep(tokens, recipe):
     except(ValueError):
         print("Failure to edit step, stepNum not an integer")
         return
+
     if not recipe.steps[num]:
         print("Failure to edit step, recipe doesn't have step of number stepNum")
         return
@@ -331,7 +336,6 @@ def addIngredient(tokens, recipe):
     :param recipe: The recipe an ingredient is being added to
     :return:
     """
-    recipe.ingredients.append(tokens[1])
     pass
 
 def deleteIngredient(tokens, recipe):
@@ -341,7 +345,14 @@ def deleteIngredient(tokens, recipe):
     :param recipe: The recipe an ingredient is being deleted from
     :return:
     """
-    pass
+    ing = tokens[1]
+    try:
+        recipe.ingredients.remove(ing)
+    except(ValueError):
+        print("Failure to delete ingredient, recipe does not contain ingredient name")
+        return
+
+    print(ing + " deleted successfully")
 
 def addEquipment(tokens, recipe):
     """
@@ -350,8 +361,14 @@ def addEquipment(tokens, recipe):
     :param recipe: The recipe a piece of equipment is being added to
     :return:
     """
-    recipe.equipment.append(tokens[1])
-    print("equipment added successfully")
+    equip = tokens[1]
+
+    if equip in recipe.equipment:
+        print("Failure to add equipment, equipment already in recipe")
+        return
+
+    recipe.equipment.append(equip)
+    print(equip + " added successfully")
 
 def removeEquipment(tokens, recipe):
     """
@@ -360,7 +377,14 @@ def removeEquipment(tokens, recipe):
     :param recipe: The recipe a piece of equipment is being deleted from
     :return:
     """
-    pass
+    equip = tokens[1]
+
+    if equip not in recipe.equipment:
+        print("Failure to remove equipment, equipment not in recipe")
+        return
+
+    recipe.equipment.remove(equip)
+    print(equip + " removed successfully")
 
 def quit(tokens, optional=None):
     """
