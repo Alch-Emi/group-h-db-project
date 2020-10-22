@@ -81,10 +81,15 @@ DELETE_RECIPE = "delete"
 ADD_INGREDIENT = "add"
 REMOVE = "remove"
 
-MANAGER = RecipeManager.new_from_env()
+MANAGER = None
 USER = None
 
 def displayIngredients(ingredients):
+    """
+    Pretty prints a list of ingredients
+    :param ingredients: list of ingredients
+    :return: None
+    """
     objs = ingredients.keys()
     storages = {}
     for ing in objs:
@@ -100,6 +105,11 @@ def displayIngredients(ingredients):
 
 
 def displayRecipe(recipe):
+    """
+    Pretty prints a recipe
+    :param recipe: recipe
+    :return: None
+    """
     print(recipe.servings)
     print(recipe.steps)
     print(recipe.equipment)
@@ -136,6 +146,11 @@ def displayRecipe(recipe):
 
 
 def displayRecipeList(recipeList):
+    """
+    Pretty prints a list of recipes with the name and author of each
+    :param recipeList: list of recipes
+    :return:
+    """
     for i in range(len(recipeList)):
         owner = recipeList[i].owner
         author = " - "
@@ -147,17 +162,37 @@ def displayRecipeList(recipeList):
         print("\t", i+1, ") ", recipeList[i].name, author, sep='')
 
 def halveRecipe(tokens, recipe):
+    """
+    function that halves the servings size and ingredient amounts of the given
+    recipe.
+    :param tokens: Not important
+    :param recipe: Recipe object being halved
+    :return:
+    """
     newServings = recipe.servings/2
     recipe.ingredients = recipe.changeServings(newServings)
     recipe.servings = newServings
 
 def doubleRecipe(tokens, recipe):
+    """
+    function that doubles the servings size and ingredient amounts of the given
+    recipe.
+    :param tokens: Not important
+    :param recipe: Recipe object being doubled
+    :return:
+    """
     newServings = 2*recipe.servings
     recipe.ingredients = recipe.changeServings(newServings)
     recipe.servings = newServings
 
 
 def select(tokens, optional = None):
+    """
+    returns the index number of the recipe selected
+    :param tokens: processed command tokens
+    :param optional: N/A
+    :return: index of recipe selected
+    """
     i = 0
     try:
         i = int(tokens[1])
@@ -168,6 +203,12 @@ def select(tokens, optional = None):
     return i
 
 def search(tokens, optional = None):
+    """
+    Searched recipe DB by name or ingredient, taking user to RecipeListView
+    :param tokens: processed command tokens
+    :param optional: N/A
+    :return: N/A
+    """
     termIndex = 1
     if tokens[1] == INGREDIENT_FLAG:
         termIndex += 1
@@ -180,10 +221,21 @@ def search(tokens, optional = None):
         return search_name(tokens[termIndex])
 
 def search_name(name):
+    """
+    Searches the DB for the recipe with the given name, returning the list of recipes
+    :param name: set of terms separated by spaces to search for recipes by
+    :return: list of recipe objects
+    """
     print("Searching Recipe DB for '" + name + "'")
     return RecipeListLoop(list(MANAGER.searchRecipes(name)))
 
 def deleteRecipe(tokens, recipe):
+    """
+    Deletes the recipe passed in from the DB if the current user owns it
+    :param tokens: N/A
+    :param recipe: recipe object being deleted from the DB
+    :return: None
+    """
     if(USER.username != recipe.owner.username):
         print("This recipe is owned by " + recipe.owner.username + ", you do not have permission to delete it.")
         return
@@ -196,8 +248,13 @@ def deleteRecipe(tokens, recipe):
 
 
 def make(tokens, optional=None):
-
-    if(optional):
+    """
+    Marks the current recipe as made for the given user, updates their ingredient list
+    :param tokens: N/A
+    :param optional: Recipe being marked as made
+    :return:
+    """
+    if not optional is None:
         if(optional.markMade(USER)):
             print("recipe made successfully!")
     else:
@@ -229,20 +286,46 @@ def removeEquipment(tokens):
     pass
 
 def quit(tokens, optional=None):
+    """
+    Sets the QUIT_REQUESTED flag to true
+    :param tokens: N/A
+    :param optional: N/A
+    :return: None
+    """
     global QUIT_REQUESTED
     QUIT_REQUESTED = True
 
 def back(tokens, optional=None):
+    """
+    Sets the BACKOUT_REQUESTED flag to true
+    :param tokens: N/A
+    :param optional: N/A
+    :return: None
+    """
     global BACK_OUT_REQUESTED
     BACK_OUT_REQUESTED = True
 
 def logout(tokens, optional=None):
+    """
+    Sets the LOGOUT_REQUESTED flag to true
+    :param tokens: N/A
+    :param optional: N/A
+    :return: None
+    """
     global LOGOUT_REQUESTED
     LOGOUT_REQUESTED = True
 
     print(f"Farewell, {USER.username}")
 
 def login(tokens, optional=None):
+    """
+    Attempts to log in the requested user. Fails if user does not exist or
+    passwords do not match. If logged in, USER is set and user is taken to main
+    loop.
+    :param tokens: list of processed commands
+    :param optional: N/A
+    :return: None
+    """
     global USER
 
     account = User.get_user(MANAGER, tokens[1])
@@ -255,6 +338,13 @@ def login(tokens, optional=None):
         print("Invalid username or password. Please try again.")
 
 def signup(tokens, optional=None):
+    """
+    Attempts to sign the user with the specified username and password up for
+    an account. sets USER and takes the user to the main loop if successful.
+    :param tokens:
+    :param optional:
+    :return:
+    """
     account = User.register_new_user(MANAGER, tokens[1], tokens[2])
     if(account):
         print(f"Account successfully created. You are now signed in as {tokens[1]}")
@@ -264,9 +354,25 @@ def signup(tokens, optional=None):
         print("Something went wrong when creating your account. Please try a different username and/or password")
 
 def inventory(tokens, optional=None):
+    """
+    Takes the user to the ingredient list loop
+    :param tokens: N/A
+    :param optional: N/A
+    :return: None
+    """
     return IngredientListLoop()
 
 def increaseIngredient(tokens, optional=None):
+    """
+    If ingredient exists and any amount specified in tokens is within acceptable
+    range ingredient is added to user's storage.
+    If ingredient is not present in DB, user is prompted to define its
+    properties and it is added
+
+    :param tokens: processed input line
+    :param optional: N/A
+    :return: None
+    """
     iname = tokens[1].lower()
 
     amt = 0
@@ -301,6 +407,14 @@ def increaseIngredient(tokens, optional=None):
     USER.save_owned_ingredients()
 
 def decreaseIngredient(tokens, optional=None):
+    """
+    If ingredient exists and any amount specified in tokens is within acceptable
+    range ingredient is removed from user's storage.
+
+    :param tokens: processed input line
+    :param optional: N/A
+    :return: None
+    """
     iname = tokens[1].lower()
 
     delete = False
@@ -343,21 +457,47 @@ def decreaseIngredient(tokens, optional=None):
 
 
 def compatible(tokens, optional=None):
+    """
+    Takes user to recipeListLoop with list of recipes compatible with their
+    ingredients
+    :param tokens: processed line of input
+    :param optional: N/A
+    :return:
+    """
     return RecipeListLoop([])
     # TODO
 
 def recent(tokens, optional=None):
+    """
+    Takes user to recipe list loop with list of recently made recipes
+    :param tokens: processed line of input
+    :param optional: N/A
+    :return:
+    """
     return RecipeListLoop([])
     # TODO
 
 def getHelp(tokens, optional=None):
+    """
+    Prints the appropriate help message given the current program state
+    :param tokens: processed line of input
+    :param optional:
+    :return:
+    """
     print(help.HELP_MESSAGE_MAP[PROGRAM_STATE])
     print(help.COMMON_HELP)
 
 def nothing(tokens, optional=None):
+    """
+    placeholder command processing function that does nothing
+    :param tokens:
+    :param optional:
+    :return:
+    """
     pass
 
 #COMMAND MAPS
+#These are maps from command keywords to functions to process them
 commonCommands = {
     HELP: getHelp,
     LOGOUT: logout,
@@ -422,6 +562,11 @@ LOGOUT_REQUESTED = False
 QUIT_REQUESTED = False
 
 def shouldBackOut():
+    """
+    Returns true if the program should back out of its current state, false
+    otherwise
+    :return: T or F
+    """
     global QUIT_REQUESTED
     global LOGOUT_REQUESTED
     global BACK_OUT_REQUESTED
@@ -439,6 +584,12 @@ def shouldBackOut():
 
 
 def applyCommand(tokens, optional = None):
+    """
+    Applies the command given by the user.
+    :param tokens: processed line of user input
+    :param optional: optional argument used by some commands
+    :return:
+    """
     loopCommands = COMMAND_SET_MAP[PROGRAM_STATE]
     func = None
     try:
@@ -494,6 +645,10 @@ def get_tokenized_input():
 
 
 def LoginLoop():
+    """
+    Loop representing a login screen. User can log in / create an account here
+    :return:
+    """
     global PROGRAM_STATE
     global USER
 
@@ -506,6 +661,11 @@ def LoginLoop():
         USER = None # if the program returns from the deeper loop, means user was logged out
 
 def MainLoop():
+    """
+    Loop representing home screen of DB. User can search recipes, create
+    recipes, manage ingredients, etc.
+    :return:
+    """
     global PROGRAM_STATE
 
     while not shouldBackOut():
@@ -524,6 +684,11 @@ def RecipeCreateLoop():
         applyCommand(tokens)
 
 def RecipeListLoop(recipeList):
+    """
+    Loop that displays a list of recipes and allows the user to act on them
+    :param recipeList:
+    :return:
+    """
     global PROGRAM_STATE
 
     while not shouldBackOut():
@@ -538,6 +703,12 @@ def RecipeListLoop(recipeList):
 
 
 def RecipeViewLoop(recipe):
+    """
+    Loop that displays a recipe to a user and allows them to mark it as made,
+    or delete it if they own it.
+    :param recipe:
+    :return:
+    """
     while not shouldBackOut():
         set_program_state(State.RECIPE_VIEW)
 
@@ -551,6 +722,11 @@ def RecipeViewLoop(recipe):
 
 
 def IngredientListLoop():
+    """
+    Loop that displays the user's current list of ingredients to them. Allows
+    them to manipulate their current set of ingredients.
+    :return:
+    """
     global PROGRAM_STATE
 
     while not shouldBackOut():
@@ -564,6 +740,18 @@ def IngredientListLoop():
 
 
 def main():
+    """
+    Main loop that initializes and calls function to start program
+    :return:
+    """
+    global MANAGER
+
+    try:
+        MANAGER = RecipeManager.new_from_env()
+    except(KeyError):
+        print("To run the database, the system must have a DATABASE environment variable defined with connection info to the database")
+        return
+
     LoginLoop()
 
 
