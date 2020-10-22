@@ -50,6 +50,12 @@ if __name__ == '__main__':
     baking_pow = Ingredient.register_ingredient(man, 'Baking Powder', 'tsp', 'pantry')
     salt = Ingredient.register_ingredient(man, 'Salt', 'tsp', 'cupboard')
     oil = Ingredient.register_ingredient(man, 'Oil', 'tbs', 'cupboard')
+    brown_sugar = Ingredient.register_ingredient(man, 'Brown Sugar', 'cups', 'pantry')
+    almond_milk = Ingredient.register_ingredient(man, 'Almond Milk', 'cups', 'fridge')
+    vanilla = Ingredient.register_ingredient(man, 'Vanilla', 'tbs', 'pantry')
+    baking_so = Ingredient.register_ingredient(man, 'Baking Soda', 'tsp', 'pantry')
+    chocolate_chips = Ingredient.register_ingredient(man, 'Chocolate Chips', 'cups', 'pantry')
+    rice = Ingredient.register_ingredient(man, 'Rice', 'cups', 'pantry')
 
     # Update an ingredient
     water.unit = 'cups'
@@ -65,7 +71,7 @@ if __name__ == '__main__':
     for ingredient in Ingredient.list_all_ingredients(man):
         print(f'\t{ingredient.iname}')
 
-    # Create a recipe
+    # Create some recipes
     pancakes = Recipe.register_recipe(
         man,          # RecipeManager
         'Cakes',  # name
@@ -88,6 +94,50 @@ if __name__ == '__main__':
             'Dolop onto pan and cook, flipping partway through'
         ]
     )
+    cookies = Recipe.register_recipe(
+        man,
+        'Chocolate Chip Cookies',
+        36,
+        25,
+        ['oven', 'baking sheet'],
+        user,
+        {
+            oil: 3.6,
+            brown_sugar: 1,
+            almond_milk: 0.25,
+            vanilla: 1,
+            flour: 2,
+            baking_so: 1,
+            baking_pow: 1,
+            salt: 1,
+            chocolate_chips: 1
+        },
+        [
+            'Preheat the oven to 350 degrees',
+            'Mix oil, sugar',
+            'Add almond milk, vanilla',
+            'Combine dry ingredients seperately, leaving out the chocolate chips',
+            'Mix dry ingredients with wet ingredients',
+            'Add chocolate chips',
+            'Dolop onto baking sheet',
+            'Bake 5m'
+        ]
+    )
+    rice = Recipe.register_recipe(
+        man,
+        'Rice',
+        8,
+        60,
+        ['rice cooker'],
+        user,
+        {
+            rice: 2
+        },
+        [
+            'Add washed rice to rice cooker with 2 cups water',
+            'Turn on and cook'
+        ]
+    )
 
     # Update the name
     pancakes.name = 'Pancakes!'
@@ -102,13 +152,15 @@ if __name__ == '__main__':
     pancakes.save_steps()
 
     # Display
-    print(f'\n{pancakes.name}')
-    print('Ingredients:')
-    for ingr, ammt in pancakes.ingredients.items():
-        print(f'\t{ingr.iname}:   {ammt} {ingr.unit}')
-    print('Steps:')
-    for step in pancakes.steps:
-        print(f'\t{step}')
+    print('\nRecipes:')
+    for recipe in [pancakes, cookies, rice]:
+        print(f'\t{recipe.name}')
+        print('\t\tIngredients:')
+        for ingr, ammt in recipe.ingredients.items():
+            print(f'\t\t\t{ingr.iname}:   {ammt} {ingr.unit}')
+        print('\t\tSteps:')
+        for step in recipe.steps:
+            print(f'\t\t\t{step}')
 
     # Display with modified servings
     print('\n Ingredients for feeding 10 people')
@@ -201,8 +253,30 @@ if __name__ == '__main__':
         print(f'\t{ingr.iname}: {quant}')
     print(f"{pancakes.name} dates made: {pancakes.dates_made()}")
 
-    # Clean up
-    user.delete()
+    # Get recent recipes
+    # Set up: Create a bunch of demo recipes, and prepare them in order
+    demo_recipes = [
+        Recipe.register_recipe(man, f"Demo Recipe {n}", 1, 2, [], user, {}, [])
+        for n in range(0,4)
+    ]
+    for r in demo_recipes:
+        r.mark_made(user)
+        print(f'{user.username} made recipe {r.name}')
+    demo_recipes[0].mark_made(user)
+    print(f'{user.username} made recipe {demo_recipes[0].name}')
+    # Get 3 most recent recipes
+    recents = man.recent_recipes(limit = 3)
+    # Display
+    print("The three most recently made recipes are:")
+    for r in recents:
+        print(f'\t{r.name}')
+
+    # Display compatible recipes
+    print(f"{user.username}'s most compatible recipes are:")
+    for (recipe, compatibility) in user.compatible_recipes():
+       print(
+           f"\t{recipe.name}, for which thea has {compatibility * 100}% of the ingredients"
+       )
 
     # Clean up
     user.delete()
