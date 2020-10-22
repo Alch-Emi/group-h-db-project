@@ -253,8 +253,10 @@ def make(tokens, optional=None):
         if(canMake(USER, optional)):
             optional.mark_made(USER)
             print("recipe made successfully!")
+        else:
+            print("Could not make recipe, insufficient ingredients.")
     else:
-        print("Recipe could not be made.")
+        print("UNKOWN ERROR - Recipe could not be made.")
         return False
     return True
 
