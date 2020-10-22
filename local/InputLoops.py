@@ -130,7 +130,7 @@ def displayRecipe(recipe):
     ingredients = list(recipe.ingredients.keys())
     for i in range(len(recipe.ingredients)):
         print("\t", recipe.ingredients[ingredients[i]], ingredients[i].unit,
-              "of", ingredients[i].iname)
+               ingredients[i].iname)
 
     print("\nDirections:")
     steps = list(recipe.steps)
