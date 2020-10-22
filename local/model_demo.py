@@ -12,6 +12,9 @@ if __name__ == '__main__':
     old_thea = User.get_user(man, 'thea')
     if old_thea != None:
         old_thea.delete()
+    old_min = User.get_user(man, 'min')
+    if old_min != None:
+        old_min.delete()
     c = man.get_cursor()
     c.execute("""
         DELETE FROM ingredients;
@@ -289,6 +292,7 @@ if __name__ == '__main__':
 
     # Clean up
     user.delete()
+    user_min.delete()
     c = man.get_cursor()
     c.execute("""
         DELETE FROM ingredients;
