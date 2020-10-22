@@ -172,6 +172,8 @@ if __name__ == '__main__':
     print('\nRecipes:')
     for recipe in [pancakes, cookies, rice]:
         print(f'\t{recipe.name}')
+        equipment_list = ', '.join(recipe.equipment)
+        print(f'\t\tEquipment: {equipment_list}')
         print('\t\tIngredients:')
         for ingr, ammt in recipe.ingredients.items():
             print(f'\t\t\t{ingr.iname}:   {ammt} {ingr.unit}')

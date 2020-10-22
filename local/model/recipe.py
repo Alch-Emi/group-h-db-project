@@ -40,7 +40,7 @@ class Recipe:
 
         # Retrieve equipment
         cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (rid,))
-        equipment = cur.fetchall()
+        equipment = [e for (e,) in cur]
         cur.close()
 
         # Retrieve owner
