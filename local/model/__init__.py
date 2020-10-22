@@ -1,4 +1,9 @@
-from model.recipe_manager import RecipeManager
-from model.user import User
-from model.ingredient import Ingredient
-from model.recipe import Recipe
+import model.ingredient
+import model.user
+import model.recipe
+import model.recipe_manager
+
+User = model.user.User
+Recipe = model.recipe.Recipe
+RecipeManager = model.recipe_manager.RecipeManager
+Ingredient = model.ingredient.Ingredient

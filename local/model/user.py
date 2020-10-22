@@ -1,6 +1,8 @@
 import bcrypt
 from psycopg2.extras import execute_values
-from model.ingredient import Ingredient
+
+from model.ingredient import *
+from model.recipe import *
 
 class User:
     # If owned_ingredients is set to None, it will be populated from the database
@@ -155,3 +157,42 @@ class User:
     # Requires a call to save() still
     def change_password(self, new_pass):
         self.pass_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode()
+
+    # Returns an iterable of tuples, where each tuple is a recipe and it's compatibility,
+    # where 1 is fully compatible and < 1 is missing some (but not all) ingredients.
+    # Tuples are in order by compatibility, descending.
+    def compatible_recipes(self, limit = 10):
+        cur = self.manager.get_cursor()
+
+        cur.execute("""
+            SELECT
+                recipes.*,
+                SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
+                    SELECT COUNT(iname)
+                    FROM requires_ingredient
+                    WHERE requires_ingredient.rid = recipes.rid
+                ) AS percent_owned
+            FROM users
+            JOIN ingredient_ownership
+                ON ingredient_ownership.uid = users.uid
+            JOIN requires_ingredient
+                AS ownd_comp
+                ON ownd_comp.iname = ingredient_ownership.iname
+            JOIN recipes
+                ON ownd_comp.rid = recipes.rid
+            WHERE users.uid = %s
+            GROUP BY recipes.rid
+            ORDER BY percent_owned DESC
+            LIMIT %s;
+        """, (self.uid, limit))
+
+        results = (
+            (
+                Recipe.new_from_record(self.manager, record),
+                record[5]
+            )
+            for record in cur.fetchall()
+        )
+
+        cur.close()
+        return results
