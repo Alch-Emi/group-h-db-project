@@ -201,8 +201,23 @@ if __name__ == '__main__':
         print(f'\t{ingr.iname}: {quant}')
     print(f"{pancakes.name} dates made: {pancakes.dates_made()}")
 
-    # Clean up
-    user.delete()
+    # Get recent recipes
+    # Set up: Create a bunch of demo recipes, and prepare them in order
+    demo_recipes = [
+        Recipe.register_recipe(man, f"Demo Recipe {n}", 1, 2, [], user, {}, [])
+        for n in range(0,4)
+    ]
+    for r in demo_recipes:
+        r.mark_made(user)
+        print(f'{user.username} made recipe {r.name}')
+    demo_recipes[0].mark_made(user)
+    print(f'{user.username} made recipe {demo_recipes[0].name}')
+    # Get 3 most recent recipes
+    recents = man.recent_recipes(limit = 3)
+    # Display
+    print("The three most recently made recipes are:")
+    for r in recents:
+        print(f'\t{r.name}')
 
     # Clean up
     user.delete()
