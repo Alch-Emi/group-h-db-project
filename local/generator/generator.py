@@ -30,7 +30,7 @@ MEASUREMENTS = [0.25, 0.5, 1, 1.5, 2, 3, 4]
 
 MAX_INGREDIENTS_PER_RECIPE = 8
 
-VOLUME = 10
+VOLUME = 50
 
 MANAGER = None
 
@@ -154,7 +154,7 @@ def readEquipment(filename):
 
     return eqdict
 
-def generate(textfile = None):
+def generate():
     adjectives = file_to_string_list(ADJECTIVES)
     food_genres = file_to_string_list(FOOD_GENRES)
     persons = file_to_string_list(PERSONS)
