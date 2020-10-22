@@ -17,7 +17,21 @@ if __name__ == '__main__':
         old_min.delete()
     c = man.get_cursor()
     c.execute("""
-        DELETE FROM ingredients;
+        DELETE FROM ingredients
+        WHERE iname in (
+            'Flour',
+            'Water',
+            'Sugar',
+            'Baking Powder',
+            'Salt',
+            'Oil',
+            'Brown Sugar',
+            'Almond Milk',
+            'Vanilla',
+            'Baking Soda',
+            'Chocolate Chips',
+            'Rice'
+        );
     """)
     c.close()
 
@@ -295,7 +309,21 @@ if __name__ == '__main__':
     user_min.delete()
     c = man.get_cursor()
     c.execute("""
-        DELETE FROM ingredients;
+        DELETE FROM ingredients
+        WHERE iname in (
+            'Flour',
+            'Water',
+            'Sugar',
+            'Baking Powder',
+            'Salt',
+            'Oil',
+            'Brown Sugar',
+            'Almond Milk',
+            'Vanilla',
+            'Baking Soda',
+            'Chocolate Chips',
+            'Rice'
+        );
     """)
     c.close()
     man.commit()
