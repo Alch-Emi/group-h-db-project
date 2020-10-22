@@ -75,6 +75,7 @@ SELECT = "select"
 MAKE = "make"
 HALVE = "halve"
 DOUBLE = "double"
+DELETE_RECIPE = "delete"
 
 #Ingredient List Commands
 ADD_INGREDIENT = "add"
@@ -181,6 +182,18 @@ def search(tokens, optional = None):
 def search_name(name):
     print("Searching Recipe DB for '" + name + "'")
     return RecipeListLoop(list(MANAGER.searchRecipes(name)))
+
+def deleteRecipe(tokens, recipe):
+    if(USER.username != recipe.owner.username):
+        print("This recipe is owned by " + recipe.owner.username + ", you do not have permission to delete it.")
+        return
+
+    recipe.delete()
+
+    print("recipe deleted successfully")
+
+    back(tokens)
+
 
 def make(tokens, optional=None):
 
@@ -384,7 +397,8 @@ recipeListCommands = {
 recipeViewCommands = {
     MAKE: make,
     HALVE: halveRecipe,
-    DOUBLE: doubleRecipe
+    DOUBLE: doubleRecipe,
+    DELETE_RECIPE: deleteRecipe
 }
 
 ingredientListCommands = {
