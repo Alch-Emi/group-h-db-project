@@ -100,13 +100,14 @@ def gen_steps_lst(addition_methods, ingredients_lst, equip_map, final_steps):
 
         if which == 0:
 
-            ing_this_step = random.choices(list(ingredients_left), k=random.randrange(1, len(ingredients_left) - 1) if len(ingredients_left) > 2 else 1)
+            ing_this_step = random.sample(list(ingredients_left), k=random.randrange(1, len(ingredients_left) - 1) if len(ingredients_left) > 2 else 1)
             ingredients_left.difference_update(set(ing_this_step))
 
             if len(ingredients_left) == 0:
                 stuff.remove(0)
 
             for i in range(len(ing_this_step)):
+                print(ing_this_step[i].iname)
                 step += ing_this_step[i].iname
 
                 if i != len(ing_this_step) - 1:
@@ -165,14 +166,14 @@ def generate():
     final_steps = file_to_string_list(FINAL_STEPS)
 
     for i in range(VOLUME):
-        recipe_ingredients = random.choices(ingredients, k=min(MAX_INGREDIENTS_PER_RECIPE, random.randint(1, len(ingredients)-1)))
+        recipe_ingredients = random.sample(ingredients, k=random.randint(1, min(len(ingredients)-1, MAX_INGREDIENTS_PER_RECIPE)))
 
         title_ingredient = random.choice(recipe_ingredients)
         name = assemble_name(persons, adjectives, pt_verbs, title_ingredient, food_genres)
 
         equip_dictionary = readEquipment(EQUIPMENT)
 
-        selected_equips = random.choices(list(equip_dictionary.keys()), k=random.randint(0, len(list(equip_dictionary.keys()))))
+        selected_equips = random.sample(list(equip_dictionary.keys()), k=random.randint(0, len(list(equip_dictionary.keys()))))
 
         selected_equips_dict = {}
         for eq in selected_equips:

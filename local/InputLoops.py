@@ -592,7 +592,7 @@ def recent(tokens, optional=None):
     :param optional: N/A
     :return:
     """
-    return RecipeListLoop([])
+    return RecipeListLoop(MANAGER.get_recent())
     # TODO
 
 def getHelp(tokens, optional=None):
