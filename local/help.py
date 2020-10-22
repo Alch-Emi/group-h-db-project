@@ -20,21 +20,22 @@ MAIN_HELP = \
     "> recent (returns list of recipes recently created)\n" \
     "> compatible (returns list of recipes that share ingredients with your storage)\n" \
     "> create 'name' (creates a recipe with the given name)\n" \
-    "> inventory 'storage location' (returns a list of ingredients stored at the given location)\n"
+    "> inventory 'storage location' (returns a list of ingredients stored at the given location)\n" \
+    "> delete (delete the account that's signed in and all associated recipes)\n"
 
 LOGIN_HELP = \
     "> login 'username' 'password'\n" \
-    "> cancel (returns to main menu)\n"
+    "> signup 'username' 'password'\n"
 
 RECIPE_VIEW_HELP = \
     "> changeServings 'new number of servings' (changes the number of servings and updates ingredient requirements)\n" \
+    "> halve (halves recipe)\n" \
+    "> double (doubles recipe)\n" \
     "> make (marks recipe as made)\n" \
     "> delete (deletes the recipe)\n" \
-    "> done (returns to main menu)\n"
 
 RECIPE_LIST_HELP = \
-    "> select 'recipe name'\n" \
-    "> done (returns to main menu)\n"
+    "> select # (view recipe listed as number '#')\n" \
 
 RECIPE_CREATE_HELP = \
     "> time 'time in minutes' (updates the time required to make the recipe)\n" \
@@ -49,9 +50,8 @@ RECIPE_CREATE_HELP = \
     "> cancel (cancels and returns to main menu)\n"
 
 INGREDIENT_LIST_HELP = \
-    "> add 'name' 'amount' 'units' (add ingredient to pantry)\n" \
-    "> remove 'name' (optional)'amount' (removes ingredient from pantry)\n" \
-    "> done (returns to main menu)\n"
+    "> add 'name' 'amount' (add ingredient to storage)\n" \
+    "> remove 'name' (optional)'amount' (removes ingredient from storage)\n" \
 
 HELP_MESSAGE_MAP = {
     State.MAIN: MAIN_HELP,
