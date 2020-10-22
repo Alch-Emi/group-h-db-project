@@ -300,14 +300,9 @@ def addStep(tokens, recipe):
     :param recipe: Recipe that a step is being added to
     :return:
     """
-    try:
-        num = int(tokens[1])
-    except(ValueError):
-        print("Failure to add step, stepNum not an integer")
-        return
 
-    recipe.steps[num] = tokens[2]
-    print("Step " + num + " added successfully")
+    recipe.steps.append(tokens[1])
+    print("Step " + str(len(recipe.steps)) + " added successfully")
 
 def editStep(tokens, recipe):
     """
@@ -325,7 +320,7 @@ def editStep(tokens, recipe):
     if not recipe.steps[num]:
         print("Failure to edit step, recipe doesn't have step of number stepNum")
         return
-
+    num -= 1
     recipe.steps[num] = tokens[2]
     print("step " + num + " edited successfully")
 
@@ -378,6 +373,11 @@ def removeEquipment(tokens, recipe):
 
     recipe.equipment.remove(equip)
     print(equip + " removed successfully")
+
+
+def createRecipe(tokens, optional=None):
+    return RecipeCreateLoop()
+
 
 def quit(tokens, optional=None):
     """
@@ -619,9 +619,9 @@ commonCommands = {
 
 mainLoopCommands = {
     SEARCH: search,
-    RECENT: nothing,
-    COMPATIBLE: nothing,
-    CREATE: nothing,
+    RECENT: recent,
+    COMPATIBLE: compatible,
+    CREATE: createRecipe,
     INVENTORY: inventory,
     DELETE_RECIPE: deleteAccount
 }

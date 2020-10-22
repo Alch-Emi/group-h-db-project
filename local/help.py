@@ -40,7 +40,7 @@ RECIPE_LIST_HELP = \
 RECIPE_CREATE_HELP = \
     "> time 'time in minutes' (updates the time required to make the recipe)\n" \
     "> servings 'number of servings' (updates the number of servings made and required ingredient amounts)\n" \
-    "> addStep 'step number' 'description' (adds new step to recipe)\n" \
+    "> addStep 'description' (adds new step to recipe)\n" \
     "> editStep 'step number' 'description' (updates description of given step)\n" \
     "> addIngredient 'name' 'amount' (adds required amount of given ingredient to recipe)\n" \
     "> deleteIngredient 'name' (deletes ingredient from recipe)\n" \
