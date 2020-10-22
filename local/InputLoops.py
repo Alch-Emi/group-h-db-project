@@ -345,6 +345,8 @@ def signup(tokens, optional=None):
     :param optional:
     :return:
     """
+    global USER
+
     account = User.register_new_user(MANAGER, tokens[1], tokens[2])
     if(account):
         print(f"Account successfully created. You are now signed in as {tokens[1]}")
@@ -352,6 +354,21 @@ def signup(tokens, optional=None):
         return MainLoop()
     else:
         print("Something went wrong when creating your account. Please try a different username and/or password")
+
+def deleteAccount(tokens, optional=None):
+    """
+    Deletes the user's account from the database
+    :param tokens:
+    :param optional:
+    :return:
+    """
+
+    if(input("Are you sure you would like to delete this account? (Y/N)\n>") == "Y"):
+        USER.delete()
+        print("account deleted.")
+        logout(tokens, optional)
+
+
 
 def inventory(tokens, optional=None):
     """
@@ -512,6 +529,7 @@ mainLoopCommands = {
     COMPATIBLE: nothing,
     CREATE: nothing,
     INVENTORY: inventory,
+    DELETE_RECIPE: deleteAccount
 }
 
 loginCommands = {
