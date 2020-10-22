@@ -6,6 +6,7 @@ File that defines all input collection/input loop logic
 
 from model.recipe_manager import RecipeManager
 from model.user import User
+from model.ingredient import Ingredient
 
 import help
 from state import State
@@ -75,6 +76,9 @@ MAKE = "make"
 HALVE = "halve"
 DOUBLE = "double"
 
+#Ingredient List Commands
+ADD_INGREDIENT = "add"
+REMOVE = "remove"
 
 MANAGER = RecipeManager.new_from_env()
 USER = None
@@ -249,6 +253,82 @@ def signup(tokens, optional=None):
 def inventory(tokens, optional=None):
     return IngredientListLoop()
 
+def increaseIngredient(tokens, optional=None):
+    iname = tokens[1].lower()
+
+    amt = 0
+    try:
+        amt = int(tokens[2])
+    except(ValueError):
+        try:
+            amt = float(tokens[2])
+        except:
+            print("Failure to increase ingredient: amount not a number")
+            return
+
+    if(amt < 0):
+        print("Amount of ingredient to be added must be positive. Please use the 'remove' command to decrease ingredients.")
+        return
+
+    ing = Ingredient.get_ingredient(MANAGER, iname)
+
+    if ing is None:
+        userin = input("ingredient '" + iname + "' does not currently exist in the database\n\nWould you like to add it? (Y/N)\n>")
+        if(userin.strip() == "Y"):
+            ing = Ingredient.register_ingredient(MANAGER, iname, input(
+                "What unit is " + iname + " measured in?\n>").lower(), input(
+                "Where is " + iname + " stored?\n>").lower())
+        else:
+            return
+
+    if(ing in USER.owned_ingredients):
+        USER.owned_ingredients[ing] += amt
+    else:
+        USER.owned_ingredients[ing] = amt
+    USER.save_owned_ingredients()
+
+def decreaseIngredient(tokens, optional=None):
+    iname = tokens[1].lower()
+
+    delete = False
+
+    if len(tokens) == 2:
+        delete = True
+    else:
+        amt = 0
+        try:
+            amt = int(tokens[2])
+        except(ValueError):
+            try:
+                amt = float(tokens[2])
+            except:
+                print("Failure to decrease ingredient: amount not a number")
+                return
+
+    ing = Ingredient.get_ingredient(MANAGER, iname)
+
+    if ing is None:
+        print("ingredient '" + iname + "' does not exist in the DB.")
+        return
+    try:
+        if(delete):
+            USER.owned_ingredients.pop(ing)
+        else:
+            if(USER.owned_ingredients[ing] < amt):
+                print("You do not have enough '" + iname + "' to remove this amount.")
+                return
+            elif(amt < 0):
+                print("The amount you chose to remove was negative. If you wish to add ingredients use the 'add' command")
+
+            USER.owned_ingredients[ing] -= amt
+
+            if(USER.owned_ingredients[ing] == 0):
+                USER.owned_ingredients.pop(ing)
+    except(KeyError):
+        print("You do not currently own any " + iname + ".")
+    USER.save_owned_ingredients()
+
+
 def compatible(tokens, optional=None):
     return RecipeListLoop([])
     # TODO
@@ -307,8 +387,13 @@ recipeViewCommands = {
     DOUBLE: doubleRecipe
 }
 
+ingredientListCommands = {
+    ADD_INGREDIENT: increaseIngredient,
+    REMOVE: decreaseIngredient
+}
+
 COMMAND_SET_MAP = {
-    State.INGREDIENT_LIST: {},
+    State.INGREDIENT_LIST: ingredientListCommands,
     State.LOGIN: loginCommands,
     State.MAIN: mainLoopCommands,
     State.RECIPE_CREATE: recipeCreateCommands,
