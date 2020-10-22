@@ -1,7 +1,7 @@
 """
 @filename - help.py
 @author - Nicholas Antiochos
-
+@author - Caitlin Arf
 Contains map of help messages for each Program State
 """
 

@@ -1,6 +1,7 @@
 """
 @filename - InputLoops.py
 @author - Nicholas Antiochos
+@author - Caitlin Arf
 File that defines all input collection/input loop logic
 """
 
@@ -254,28 +255,111 @@ def make(tokens, optional=None):
         return False
     return True
 
-def time(tokens):
+def time(tokens, recipe):
+    """
+    Adds or updates the time required to make the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: Recipe having time added or changed
+    :return:
+    """
+    try:
+        timeReq = int(tokens[1])
+    except(ValueError):
+        try:
+            timeReq = float(tokens[1])
+        except:
+            print("Failure to add time, value not a number")
+            return
+    recipe.time = timeReq
+    print("recipe time added successfully")
+
+def servings(tokens, recipe):
+    """
+    Add or update the number of servings for the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: Recipe have servings added or changed
+    :return:
+    """
+    try:
+        serv = int(tokens[1])
+    except(ValueError):
+        try:
+            serv = float(tokens[1])
+        except:
+            print("Failure to add servings, value not a number")
+            return
+    recipe.servings = serv
+    print("servings added successfully")
+
+def addStep(tokens, recipe):
+    """
+    Add a new step to the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: Recipe that a step is being added to
+    :return:
+    """
+    try:
+        num = int(tokens[1])
+    except(ValueError):
+        print("Failure to add step, stepNum not an integer")
+        return
+    recipe.steps[num] = tokens[2]
+
+def editStep(tokens, recipe):
+    """
+    Edit a step in the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: Recipe that the step being edited is from
+    :return:
+    """
+    try:
+        num = int(tokens[1])
+    except(ValueError):
+        print("Failure to edit step, stepNum not an integer")
+        return
+    if not recipe.steps[num]:
+        print("Failure to edit step, recipe doesn't have step of number stepNum")
+        return
+
+    recipe.steps[num] = tokens[2]
+    print("step " + num + " edited successfully")
+
+def addIngredient(tokens, recipe):
+    """
+    Add an ingredient to the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: The recipe an ingredient is being added to
+    :return:
+    """
+    recipe.ingredients.append(tokens[1])
     pass
 
-def servings(tokens):
+def deleteIngredient(tokens, recipe):
+    """
+    Delete an ingredient from the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: The recipe an ingredient is being deleted from
+    :return:
+    """
     pass
 
-def addStep(tokens):
-    pass
+def addEquipment(tokens, recipe):
+    """
+    Add a piece of equipment to the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: The recipe a piece of equipment is being added to
+    :return:
+    """
+    recipe.equipment.append(tokens[1])
+    print("equipment added successfully")
 
-def editStep(tokens):
-    pass
-
-def addIngredient(tokens):
-    pass
-
-def deleteIngredient(tokens):
-    pass
-
-def addEquipment(tokens):
-    pass
-
-def removeEquipment(tokens):
+def removeEquipment(tokens, recipe):
+    """
+    Remove a piece of equipment from the given recipe
+    :param tokens: Processed command tokens
+    :param recipe: The recipe a piece of equipment is being deleted from
+    :return:
+    """
     pass
 
 def quit(tokens, optional=None):
