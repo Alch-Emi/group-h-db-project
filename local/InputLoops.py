@@ -110,13 +110,6 @@ def displayRecipe(recipe):
     :param recipe: recipe
     :return: None
     """
-    print(recipe.servings)
-    print(recipe.steps)
-    print(recipe.equipment)
-    print(recipe.time)
-    print(recipe.ingredients)
-
-    return
 
     print(recipe.name, "\n")
     print("Author -", recipe.owner.username if recipe.owner else "Unknown", "\n")
@@ -127,7 +120,7 @@ def displayRecipe(recipe):
     if (len(recipe.equipment) > 0):
         print("Required Equipment:")
         for equipment in recipe.equipment:
-            print("\t +", equipment[0])
+            print("\t +", equipment)
     else:
         print("No required Equipment")
 
@@ -628,13 +621,18 @@ def applyCommand(tokens, optional = None):
             ans = func(tokens, optional)
     return ans
 
-def get_tokenized_input():
+def get_tokenized_input(st=None):
     """
     Gets a line of input, and returns a list of strings that were separated by
     spaces. Any text between 2 single quotes is kept intact
     :return: List of strings
     """
-    uin = input(INPUT_MSG)
+    uin = ""
+    if st is None:
+        uin = input(INPUT_MSG)
+    else:
+        uin = st
+
     in_chunks = []
     dont_strip = []
 

@@ -1,0 +1,13 @@
+oven
+preheat oven to {} degrees farenheit
+place it in the oven and let it bake for {} minutes
+remove from oven
+
+toaster
+toast on medium for {} minutes
+
+blender
+blend for {} minutes
+
+microwave
+microwave on high for {} minutes
