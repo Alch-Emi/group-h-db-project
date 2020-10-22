@@ -55,6 +55,7 @@ INGREDIENT_FLAG = "-i"
 
 COMPATIBLE = "compatible"
 RECENT = "recent"
+MY_RECENT = "myrecent"
 CREATE = "create"
 INVENTORY = "inventory"
 LOGOUT = "logout"
@@ -248,10 +249,20 @@ def make(tokens, optional=None):
     :param optional: Recipe being marked as made
     :return:
     """
-    if not optional is None:
-        if(optional.markMade(USER)):
+    if optional is not None:
+        if(canMake(USER, optional)):
+            optional.mark_made(USER)
             print("recipe made successfully!")
     else:
+        print("Recipe could not be made.")
+        return False
+    return True
+
+def canMake(USER, Recipe):
+    for ingredient in list(Recipe.ingredients.keys()):
+        if(ingredient in USER.owned_ingredients):
+            if(Recipe.ingredients[ingredient] <= USER.owned_ingredients[ingredient]):
+                continue
         return False
     return True
 
@@ -580,13 +591,23 @@ def compatible(tokens, optional=None):
 
 def recent(tokens, optional=None):
     """
-    Takes user to recipe list loop with list of recently made recipes
+    Takes user to recipe list loop with list of global recently made recipes
     :param tokens: processed line of input
     :param optional: N/A
     :return:
     """
-    return RecipeListLoop(MANAGER.get_recent())
-    # TODO
+    return RecipeListLoop(list(MANAGER.recent_recipes()))
+
+
+def myRecent(tokens, optional=None):
+    """
+    Takes user to recipe list loop with list of their recently made recipes.
+    :param tokens:
+    :param optional:
+    :return:
+    """
+    return RecipeListLoop(list(MANAGER.recent_recipes(USER)))
+
 
 def getHelp(tokens, optional=None):
     """
@@ -623,7 +644,8 @@ mainLoopCommands = {
     COMPATIBLE: compatible,
     CREATE: createRecipe,
     INVENTORY: inventory,
-    DELETE_RECIPE: deleteAccount
+    DELETE_RECIPE: deleteAccount,
+    MY_RECENT: myRecent
 }
 
 loginCommands = {
