@@ -57,7 +57,10 @@ class Ingredient:
             FROM ingredients
         """)
 
-        return [
+        results = [
             Ingredient(manager, result[0], result[1], result[2])
-            for result in cur
+            for result in cur.fetchall()
         ]
+
+        cur.close()
+        return results
