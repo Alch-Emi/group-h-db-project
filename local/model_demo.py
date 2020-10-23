@@ -306,6 +306,11 @@ if __name__ == '__main__':
            f"\t{recipe.name}, for which thea has {compatibility * 100}% of the ingredients"
        )
 
+    # Search recipes by ingredient
+    print("Recipes containing flour:")
+    for recipe in man.search_by_ingredient(flour, limit = 99):
+        print(f'\t{recipe.name}')
+
     # Clean up
     user.delete()
     user_min.delete()

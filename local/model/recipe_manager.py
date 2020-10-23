@@ -26,6 +26,20 @@ class RecipeManager:
 
         return (Recipe.new_from_record(self, record) for record in records)
 
+    def search_by_ingredient(self, ingr, limit = 10):
+        cur = self.get_cursor()
+        cur.execute("""
+            SELECT recipes.*
+            FROM requires_ingredient
+            JOIN recipes ON requires_ingredient.rid = recipes.rid
+            WHERE iname = %s
+            LIMIT %s;
+        """, (ingr.iname, limit))
+
+        results = (Recipe.new_from_record(self, record) for record in cur.fetchall())
+        cur.close()
+        return results
+
     def recent_recipes(self, user = None, limit = 5):
         cur = self.get_cursor()
         cur.execute("""
