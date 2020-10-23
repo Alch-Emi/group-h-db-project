@@ -254,6 +254,10 @@ def make(tokens, optional=None):
     if optional is not None:
         if(canMake(USER, optional)):
             optional.mark_made(USER)
+            keys = list(USER.owned_ingredients.keys())
+            for ing in keys:
+                if(USER.owned_ingredients[ing] == 0):
+                    USER.owned_ingredients.pop(ing)
             print("recipe made successfully!")
         else:
             print("Could not make recipe, insufficient ingredients.")
@@ -283,6 +287,7 @@ def saveRecipe(tokens, recipe):
     #displayRecipe(recipe)
     Recipe.register_recipe(MANAGER, name=recipe.name, prep_time=recipe.time, servings=recipe.servings, equipment=recipe.equipment, owner=USER, steps=recipe.steps, ingredients=recipe.ingredients)
     print(recipe.name + " saved successfully!")
+    back(tokens)
 
 
 def canMake(USER, Recipe):
@@ -424,7 +429,7 @@ def deleteIngredient(tokens, recipe):
         print(iname, "was not in the recipe.")
         return
 
-    recipe.ingredients.pop(key=ing)
+    recipe.ingredients.pop(ing)
 
     print(iname, "successfully removed from recipe.")
 
