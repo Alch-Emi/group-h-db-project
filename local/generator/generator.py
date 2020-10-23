@@ -24,9 +24,9 @@ FINAL_STEPS = "final_steps"
 EQUIPMENT = "equipment"
 
 PERSON_CHANCE = 0.25
-ADJECTIVE_CHANCE = 0.8
+ADJECTIVE_CHANCE = 0.5
 FOOD_GENRES_CHANCE = 1
-PT_VERBS_CHANCE = 0.8
+PT_VERBS_CHANCE = 0.9
 
 MEASUREMENTS = [0.25, 0.5, 1, 1.5, 2, 3, 4]
 
@@ -65,8 +65,7 @@ def assemble_name(persons, adjectives, pt_verbs, ingredient, food_genres):
 
     if(random.random() <= ADJECTIVE_CHANCE):
         name += get_one(adjectives) + " "
-
-    if(random.random() <= PT_VERBS_CHANCE):
+    elif(random.random() <= PT_VERBS_CHANCE):
         name += get_one(pt_verbs) + " "
 
     name += ingredient.iname + " "
@@ -194,11 +193,14 @@ def generate():
 
         rec = Recipe(MANAGER, 0, random.randint(1, 4), random.randint(5, 360), name, list(selected_equips_dict.keys()), None, ingredients_dict, recipe_steps)
 
-        Recipe.register_recipe(MANAGER, name, random.randrange(1, 4), random.randint(5, 360), list(selected_equips_dict.keys()), USER, ingredients_dict, recipe_steps)
-        #def __init__(self, manager, rid, servings, time, name, equip, owner,
-         #            ingr, steps)
         print("====================")
         displayRecipe(rec)
 
+        Recipe.register_recipe(MANAGER, name, random.randrange(1, 4), random.randint(5, 360), list(selected_equips_dict.keys()), USER, ingredients_dict, recipe_steps)
+        #def __init__(self, manager, rid, servings, time, name, equip, owner,
+         #            ingr, steps)
+
+
 
 generate()
+MANAGER.disconnect()

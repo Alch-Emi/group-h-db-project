@@ -8,6 +8,7 @@ File that defines all input collection/input loop logic
 from model.recipe_manager import RecipeManager
 from model.user import User
 from model.ingredient import Ingredient
+from model.recipe import Recipe
 
 import help
 from state import State
@@ -65,10 +66,11 @@ TIME = "time"
 SERVINGS = "servings"
 ADD_STEP = "addStep"
 EDIT_STEP = "editStep"
-ADD_INGREDIENT = "addIngredient"
+ADD_INGREDIENT_RECIPE = "addIngredient"
 DELETE_INGREDIENT = "deleteIngredient"
 ADD_EQUIPMENT = "addEquipment"
 REMOVE_EQUIPMENT = "removeEquipment"
+SAVE = "save"
 
 #Recipe List Commands
 SELECT = "select"
@@ -116,8 +118,8 @@ def displayRecipe(recipe):
     print(recipe.name, "\n")
     print("Author -", recipe.owner.username if recipe.owner else "Unknown", "\n")
 
-    print("Servings:", recipe.servings)
-    print("Prep Time:", recipe.time, "minutes\n")
+    print("Servings:", recipe.servings if recipe.servings is not None else "?")
+    print("Prep Time:", recipe.time if recipe.time is not None else "?", "minutes\n")
 
     if (len(recipe.equipment) > 0):
         print("Required Equipment:")
@@ -260,6 +262,29 @@ def make(tokens, optional=None):
         return False
     return True
 
+
+def saveRecipe(tokens, recipe):
+    ready = True
+    if len(recipe.ingredients.keys()) == 0:
+        print("Cannot save recipe with zero ingredients")
+        ready = False
+    if len(recipe.steps) == 0:
+        print("Cannot save recipe with no steps")
+        ready = False
+    if( recipe.servings is None):
+        print("Must set servings size of recipe before saving")
+        ready = False
+    if(recipe.time is None):
+        print("Must set prep time of recipe before saving")
+        ready = False
+
+    if not ready:
+        return
+    #displayRecipe(recipe)
+    Recipe.register_recipe(MANAGER, name=recipe.name, prep_time=recipe.time, servings=recipe.servings, equipment=recipe.equipment, owner=USER, steps=recipe.steps, ingredients=recipe.ingredients)
+    print(recipe.name + " saved successfully!")
+
+
 def canMake(USER, Recipe):
     for ingredient in list(Recipe.ingredients.keys()):
         if(ingredient in USER.owned_ingredients):
@@ -284,6 +309,10 @@ def time(tokens, recipe):
             print("Failure to add time, value not a number")
             return
 
+    if (timeReq <= 0):
+        print("prep time must be a positive value")
+        return
+
     recipe.time = timeReq
     print("recipe time added successfully")
 
@@ -302,6 +331,10 @@ def servings(tokens, recipe):
         except:
             print("Failure to add servings, value not a number")
             return
+
+    if (serv <= 0):
+        print("Servings amount must be a positive value")
+        return
 
     recipe.servings = serv
     print("servings added successfully")
@@ -330,12 +363,14 @@ def editStep(tokens, recipe):
         print("Failure to edit step, stepNum not an integer")
         return
 
-    if not recipe.steps[num]:
-        print("Failure to edit step, recipe doesn't have step of number stepNum")
-        return
     num -= 1
+
+    if num < 0 or num >= len(recipe.steps):
+        print("Failure to edit step, recipe doesn't have step of number", num + 1)
+        return
+
     recipe.steps[num] = tokens[2]
-    print("step " + num + " edited successfully")
+    print("step " + str(num) + " edited successfully")
 
 def addIngredient(tokens, recipe):
     """
@@ -344,6 +379,34 @@ def addIngredient(tokens, recipe):
     :param recipe: The recipe an ingredient is being added to
     :return:
     """
+    iname = tokens[1]
+
+    amt = 0
+    try:
+        amt = int(tokens[2])
+    except(ValueError):
+        try:
+            amt = float(tokens[2])
+        except:
+            print("Failure to add ingredient, amount not a number")
+            return
+
+    if(amt <= 0):
+        print("Ingredient amount must be a positive value")
+        return
+
+    ing = Ingredient.get_ingredient(MANAGER, iname)
+
+    if not ing:
+        ing = register_ing_prompt(iname)
+        if not ing:
+            print("Cannot add nonexistent ingredient")
+
+    recipe.ingredients[ing] = amt
+    print(amt, ing.unit, iname, "added successfully to recipe")
+
+
+
     pass
 
 def deleteIngredient(tokens, recipe):
@@ -353,7 +416,18 @@ def deleteIngredient(tokens, recipe):
     :param recipe: The recipe an ingredient is being deleted from
     :return:
     """
-    pass
+    iname = tokens[1]
+
+    ing = Ingredient.get_ingredient(MANAGER, iname)
+
+    if ing not in recipe.ingredients:
+        print(iname, "was not in the recipe.")
+        return
+
+    recipe.ingredients.pop(key=ing)
+
+    print(iname, "successfully removed from recipe.")
+
 
 def addEquipment(tokens, recipe):
     """
@@ -389,7 +463,9 @@ def removeEquipment(tokens, recipe):
 
 
 def createRecipe(tokens, optional=None):
-    return RecipeCreateLoop()
+    return RecipeCreateLoop(
+        Recipe(MANAGER, None, None, None, tokens[1], [], USER, {}, [])
+    )
 
 
 def quit(tokens, optional=None):
@@ -531,6 +607,17 @@ def increaseIngredient(tokens, optional=None):
         USER.owned_ingredients[ing] = amt
     USER.save_owned_ingredients()
 
+
+def register_ing_prompt(iname):
+    userin = input("ingredient '" + iname + "' does not currently exist in the database\n\nWould you like to add it? (Y/N)\n>")
+    if(userin.strip() == "Y"):
+        ing = Ingredient.register_ingredient(MANAGER, iname, input(
+            "What unit is " + iname + " measured in?\n>").lower(), input(
+            "Where is " + iname + " stored?\n>").lower())
+        return ing
+    else:
+        return None
+
 def decreaseIngredient(tokens, optional=None):
     """
     If ingredient exists and any amount specified in tokens is within acceptable
@@ -661,10 +748,11 @@ recipeCreateCommands = {
     SERVINGS: servings,
     ADD_STEP: addStep,
     EDIT_STEP: editStep,
-    ADD_INGREDIENT: addIngredient,
+    ADD_INGREDIENT_RECIPE: addIngredient,
     DELETE_INGREDIENT: deleteIngredient,
     ADD_EQUIPMENT: addEquipment,
-    REMOVE_EQUIPMENT: removeEquipment
+    REMOVE_EQUIPMENT: removeEquipment,
+    SAVE: saveRecipe
 }
 
 recipeListCommands = {
@@ -737,14 +825,15 @@ def applyCommand(tokens, optional = None):
                 func = commonCommands[first]
         else:
             print("INVALID COMMAND")
+
+        ans = None
+        if func != None:
+            if optional == None:
+                ans = func(tokens)
+            else:
+                ans = func(tokens, optional)
     except IndexError:
         print("invalid arguments for given command")
-    ans = None
-    if func != None:
-        if optional == None:
-            ans = func(tokens)
-        else:
-            ans = func(tokens, optional)
     return ans
 
 def get_tokenized_input(st=None):
@@ -816,14 +905,15 @@ def MainLoop():
 
         applyCommand(tokens)
 
-def RecipeCreateLoop():
+def RecipeCreateLoop(recipe):
     global PROGRAM_STATE
 
     while not shouldBackOut():
         set_program_state(State.RECIPE_CREATE)
+        displayRecipe(recipe)
         tokens = get_tokenized_input()
 
-        applyCommand(tokens)
+        applyCommand(tokens, recipe)
 
 def RecipeListLoop(recipeList):
     """

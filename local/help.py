@@ -46,7 +46,7 @@ RECIPE_CREATE_HELP = \
     "> deleteIngredient 'name' (deletes ingredient from recipe)\n" \
     "> addEquipment 'name' (adds required piece of equipment to recipe)\n" \
     "> removeEquipment 'name' (removes piece of equipment from recipe)\n" \
-    "> done (creates recipe and opens recipe view)\n" \
+    "> save (creates recipe and opens recipe view)\n" \
     "> cancel (cancels and returns to main menu)\n"
 
 INGREDIENT_LIST_HELP = \
