@@ -35,6 +35,7 @@ class User:
             SELECT dateMade FROM dates_made WHERE uid = %s AND RID = %s
             """, (uid, rid))
         record = cur.fetchall()
+        cur.close()
         return record
 
     def register_new_user(manager, username, password):
@@ -67,6 +68,7 @@ class User:
         """, (self.username, self.pass_hash, self.uid))
         #TODO Handle existing user
         self.manager.commit()
+        cur.close()
 
     def save_owned_ingredients(self):
         cur = self.manager.get_cursor()
