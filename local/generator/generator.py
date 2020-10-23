@@ -9,6 +9,8 @@ import random
 from InputLoops import get_tokenized_input as tokenize, displayRecipe
 from model.ingredient import Ingredient
 from model.recipe import Recipe
+from model.recipe_manager import RecipeManager
+from model.user import User
 
 ADJECTIVES = 'adjectives'
 FOOD_GENRES = "food_genres"
@@ -30,9 +32,12 @@ MEASUREMENTS = [0.25, 0.5, 1, 1.5, 2, 3, 4]
 
 MAX_INGREDIENTS_PER_RECIPE = 8
 
-VOLUME = 50
+VOLUME = 200
 
-MANAGER = None
+UID = 3
+MANAGER = RecipeManager.new_from_env()
+USER = User.get_user_by_uid(MANAGER, UID)
+
 
 def file_to_string_list(filename):
     file = open(filename, "r")
@@ -73,7 +78,11 @@ def assemble_name(persons, adjectives, pt_verbs, ingredient, food_genres):
 
 def ingredient_from_st(st):
     tokens = tokenize(st)
-    ing = Ingredient(MANAGER, tokens[0], tokens[1], tokens[2])
+
+    ing = Ingredient.get_ingredient(MANAGER, tokens[0])
+
+    if ing is None:
+        ing = Ingredient.register_ingredient(MANAGER, tokens[0], tokens[1], tokens[2])
     return ing
 
 def gen_ingredient_dictionary(ingredients_lst):
@@ -185,7 +194,7 @@ def generate():
 
         rec = Recipe(MANAGER, 0, random.randint(1, 4), random.randint(5, 360), name, list(selected_equips_dict.keys()), None, ingredients_dict, recipe_steps)
 
-
+        Recipe.register_recipe(MANAGER, name, random.randrange(1, 4), random.randint(5, 360), list(selected_equips_dict.keys()), USER, ingredients_dict, recipe_steps)
         #def __init__(self, manager, rid, servings, time, name, equip, owner,
          #            ingr, steps)
         print("====================")

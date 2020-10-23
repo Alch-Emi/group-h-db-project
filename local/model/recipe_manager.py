@@ -63,3 +63,6 @@ class RecipeManager:
 
     def commit(self):
         self.conn.commit()
+
+    def disconnect(self):
+        self.conn.close()
