@@ -64,6 +64,7 @@ class Recipe:
         rid = self.rid
         cur.execute("SELECT dateMade FROM dates_made WHERE rid = %s", (rid,))
         record = cur.fetchall()
+        cur.close()
         return record
 
     def mark_made(self, user):
@@ -175,6 +176,7 @@ class Recipe:
         """, [(self.rid, ename) for ename in self.equipment])
 
         self.manager.commit()
+        cur.close()
 
     def save_steps(self):
         cur = self.manager.get_cursor()
@@ -197,6 +199,7 @@ class Recipe:
         """, (self.rid, len(self.steps)))
 
         self.manager.commit()
+        cur.close()
 
     def delete(self):
         cur = self.manager.get_cursor()
