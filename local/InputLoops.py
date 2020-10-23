@@ -521,7 +521,6 @@ def login(tokens, optional=None):
     if(account != None and account.check_password(tokens[2])):
         print(f"Welcome, {tokens[1]}")
         USER = account
-        print(USER.uid)
         return MainLoop()
     else:
         print("Invalid username or password. Please try again.")
