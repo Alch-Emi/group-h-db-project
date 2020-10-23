@@ -32,8 +32,8 @@ class User:
         uid = self.uid
         rid = recipe.getRID()
         cur.execute("""
-            SELECT dateMade FROM DATE_MADE WHERE uid = %s AND RID = %s
-            """, uid, rid)
+            SELECT dateMade FROM dates_made WHERE uid = %s AND RID = %s
+            """, (uid, rid))
         record = cur.fetchall()
         return record
 

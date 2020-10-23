@@ -14,9 +14,7 @@ COMMON_HELP = \
     "> quit (exit the program)\n"
 
 MAIN_HELP = \
-    "> search [1 flag] 'search term'\n" \
-    "\t-n : search by recipe name (default)\n" \
-    "\t-i : search by ingredient name\n" \
+    "> search 'search term'\n" \
     "> recent (returns list of recipes recently created)\n" \
     "> compatible (returns list of recipes that share ingredients with your storage)\n" \
     "> create 'name' (creates a recipe with the given name)\n" \

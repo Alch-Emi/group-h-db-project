@@ -115,7 +115,13 @@ def displayRecipe(recipe):
     :return: None
     """
 
-    print(recipe.name, "\n")
+    print(recipe.name)
+
+    dates = list(USER.listDatesMade(recipe))
+
+    if(len(dates) != 0):
+        print("(last made", max(dates)[0], ')')
+    print()
     print("Author -", recipe.owner.username if recipe.owner else "Unknown", "\n")
 
     print("Servings:", recipe.servings if recipe.servings is not None else "?")
@@ -148,6 +154,10 @@ def displayRecipeList(recipeList):
     :param recipeList: list of recipes
     :return:
     """
+
+    if(len(recipeList) == 0):
+        print("No recipes found with the given search criteria.")
+
     for i in range(len(recipeList)):
         owner = recipeList[i].owner
         author = " - "
@@ -680,8 +690,7 @@ def compatible(tokens, optional=None):
     :param optional: N/A
     :return:
     """
-    return RecipeListLoop([])
-    # TODO
+    return RecipeListLoop(list(map(lambda x: x[0], list(USER.compatible_recipes()))))
 
 def recent(tokens, optional=None):
     """
