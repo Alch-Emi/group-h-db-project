@@ -219,8 +219,11 @@ def search(tokens, optional = None):
     termIndex = 1
     if tokens[1] == INGREDIENT_FLAG:
         termIndex += 1
+        ing = Ingredient.get_ingredient(MANAGER, tokens[2])
+        if ing is None:
+            print("Ingredient", tokens[2], "does not exist in the database")
         print("Searching for recipes containing '" + tokens[termIndex] + "'")
-        #TODO Search for recipes containing ingredient
+        return RecipeListLoop(list(MANAGER.search_by_ingredient(ing)))
     elif tokens[1] == NAME_FLAG:
         termIndex += 1
         return search_name(tokens[termIndex])
