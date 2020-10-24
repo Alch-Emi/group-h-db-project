@@ -80,6 +80,7 @@ MAKE = "make"
 HALVE = "halve"
 DOUBLE = "double"
 DELETE_RECIPE = "delete"
+EDIT_RECIPE = "edit"
 
 #Ingredient List Commands
 ADD_INGREDIENT = "add"
@@ -257,6 +258,14 @@ def deleteRecipe(tokens, recipe):
     back(tokens)
 
 
+def editRecipe(tokens, recipe):
+    if USER.uid == recipe.owner.uid:
+        print("Now editing '", recipe.name, "'", sep='')
+        return RecipeCreateLoop(recipe)
+    else:
+        print("You cannot edit a recipe that is not yours.")
+
+
 def make(tokens, optional=None):
     """
     Marks the current recipe as made for the given user, updates their ingredient list
@@ -298,7 +307,14 @@ def saveRecipe(tokens, recipe):
     if not ready:
         return
     #displayRecipe(recipe)
-    Recipe.register_recipe(MANAGER, name=recipe.name, prep_time=recipe.time, servings=recipe.servings, equipment=recipe.equipment, owner=USER, steps=recipe.steps, ingredients=recipe.ingredients)
+    if recipe.rid is not None:
+        recipe.delete()
+
+    Recipe.register_recipe(MANAGER, name=recipe.name, prep_time=recipe.time,
+                           servings=recipe.servings, equipment=recipe.equipment,
+                           owner=USER, steps=recipe.steps,
+                           ingredients=recipe.ingredients)
+
     print(recipe.name + " saved successfully!")
     back(tokens)
 
@@ -779,7 +795,8 @@ recipeViewCommands = {
     MAKE: make,
     HALVE: halveRecipe,
     DOUBLE: doubleRecipe,
-    DELETE_RECIPE: deleteRecipe
+    DELETE_RECIPE: deleteRecipe,
+    EDIT_RECIPE: editRecipe
 }
 
 ingredientListCommands = {

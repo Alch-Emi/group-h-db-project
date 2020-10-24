@@ -32,6 +32,7 @@ RECIPE_VIEW_HELP = \
     "> halve (halves recipe)\n" \
     "> double (doubles recipe)\n" \
     "> make (marks recipe as made)\n" \
+    "> edit (edits the recipe)\n" \
     "> delete (deletes the recipe)\n" \
 
 RECIPE_LIST_HELP = \
