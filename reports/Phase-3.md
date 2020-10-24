@@ -1,5 +1,5 @@
 # h's Project Report #
-Phase 4
+Phase 3
 
 Several small changes were made to our table planning documents (ER Diagram & Reduction to
 Tables), including the following:
