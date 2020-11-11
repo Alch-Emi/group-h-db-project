@@ -2,7 +2,7 @@ import bcrypt
 from psycopg2.extras import execute_values
 
 from model.ingredient import *
-from model.recipe import *
+from model.recipe import Recipe
 
 class User:
     # If owned_ingredients is set to None, it will be populated from the database
@@ -38,6 +38,7 @@ class User:
         cur.close()
         return record
 
+    @staticmethod
     def register_new_user(manager, username, password):
         pass_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
 
@@ -91,6 +92,7 @@ class User:
         self.manager.commit()
         cur.close()
 
+    @staticmethod
     def get_user_by_uid(manager, uid):
         cur = manager.get_cursor()
         cur.execute("""
@@ -103,6 +105,7 @@ class User:
 
         return User(manager, uid, user_data[0], user_data[1], None) if user_data != None else None
 
+    @staticmethod
     def get_user(manager, username):
         cur = manager.get_cursor()
         cur.execute("""

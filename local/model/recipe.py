@@ -18,6 +18,7 @@ class Recipe:
         self.ingredients = ingr
         self.steps = steps
 
+    @staticmethod
     def new_from_record(manager, record):
         rid = record[0]
         cur = manager.get_cursor()
@@ -98,6 +99,7 @@ class Recipe:
     def getRID(self):
         return self.rid
 
+    @staticmethod
     def register_recipe(
             manager,
             name,

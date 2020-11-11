@@ -4,8 +4,7 @@ import os
 
 import psycopg2
 
-from model.user import *
-from model.recipe import *
+from model.recipe import Recipe
 
 
 class RecipeManager:
@@ -17,7 +16,7 @@ class RecipeManager:
         cur = self.get_cursor()
         partialName = ['%' + x.strip() + '%' for x in name.split(' ')]
         sqlQuery = "SELECT * FROM RECIPES WHERE "
-        for partial in partialName:
+        for _ in partialName:
             sqlQuery += "rName LIKE %s OR "
         sqlQuery = sqlQuery[:-4] + ';'
         cur.execute(sqlQuery, partialName)
@@ -67,6 +66,7 @@ class RecipeManager:
         cur.close()
         return results
 
+    @staticmethod
     def new_from_env():
         return RecipeManager(
             psycopg2.connect(os.environ['DATABASE'])

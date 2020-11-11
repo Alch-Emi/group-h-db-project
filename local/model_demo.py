@@ -207,12 +207,12 @@ if __name__ == '__main__':
             'Combine  ingredients & mix'
         ]
     )
-    in_database = len(list(man.searchRecipes("Sugar"))) > 0;
+    in_database = len(list(man.searchRecipes("Sugar"))) > 0
     print(f"\nSugar water successfully created: {in_database}")
 
     # Delete recipe
     sugar_water.delete()
-    in_database = len(list(man.searchRecipes("Sugar"))) > 0;
+    in_database = len(list(man.searchRecipes("Sugar"))) > 0
     print(f"Sugar water successfully deleted: {not in_database}")
 
     # Create a new user with one recipe
@@ -234,9 +234,9 @@ if __name__ == '__main__':
     )
     min_exists = User.get_user(man, "min") != None
     print(f"User min created: {min_exists}")
-    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0;
+    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0
     print(f"Sugar water created for min: {sugar_water_exists}")
-    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
+    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0
     print(f"Pancakes still exist: {pancakes_exist}")
 
     # Delete the new user (and consiquently all their recipes)
@@ -244,9 +244,9 @@ if __name__ == '__main__':
     new_user.delete()
     min_exists = User.get_user(man, "min") != None
     print(f"User min exists: {min_exists}")
-    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0;
+    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0
     print(f"Sugar water exists: {sugar_water_exists}")
-    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0;
+    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0
     print(f"Pancakes still exist: {pancakes_exist}")
 
     # Add some ingredients to a user's supply

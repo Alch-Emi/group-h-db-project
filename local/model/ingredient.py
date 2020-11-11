@@ -11,6 +11,7 @@ class Ingredient:
     def __hash__(self):
         return hash(self.iname)
 
+    @staticmethod
     def register_ingredient(manager, name, unit, storage_location):
         cur = manager.get_cursor()
         cur.execute("""
@@ -38,6 +39,7 @@ class Ingredient:
         self.manager.commit()
         cur.close()
 
+    @staticmethod
     def get_ingredient(manager, iname):
         cur = manager.get_cursor()
         cur.execute("""
@@ -50,6 +52,7 @@ class Ingredient:
 
         return Ingredient(manager, iname, data[0], data[1]) if data != None else None
 
+    @staticmethod
     def list_all_ingredients(manager):
         cur = manager.get_cursor()
         cur.execute("""
