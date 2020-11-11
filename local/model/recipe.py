@@ -12,35 +12,40 @@ from typing import Generator
 from typing import Any
 
 class Recipe:
-    def __init__(self, manager, rid, servings, time, name, equip, owner, ingr, steps):
+    def __init__(
+        self,
+        manager,
+        rid,
+        servings,
+        time,
+        name,
+        owner_id,
+        equip = None,
+        owner = None,
+        ingr = None,
+        steps = None
+    ):
         self.manager = manager
         self.rid = rid
         self.servings = servings
         self.time = time
         self.name = name
         self.cached_equip = equip
-        self.owner = owner
+        self.owner_id = owner_id
+        self.cached_owner = owner
         self.cached_ingredients = ingr
         self.cached_steps = steps
 
     @staticmethod
     def new_from_record(manager, record):
-        rid = record[0]
-
-        # Retrieve owner
-        owner = user.User.get_user_by_uid(manager, record[4])
-
         # Produce recipe
         return Recipe(
             manager,
-            rid,
+            record[0],
             record[1],
             record[2],
             record[3],
-            None,
-            owner,
-            None,
-            None
+            record[4]
         )
 
     @property
@@ -108,6 +113,19 @@ class Recipe:
     @equipment.setter
     def equipment(self, new):
         self.cached_equip = new
+
+    @property
+    def owner(self):
+        if self.cached_owner == None and self.owner_id != None:
+            # Retrieve owner
+            self.cached_owner = user.User.get_user_by_uid(self.manager, self.owner_id)
+
+        return self.cached_owner
+
+    @owner.setter
+    def owner(self, new):
+        self.cached_owner = new
+        self.owner_id = new.uid
 
     def dates_made(self):
         cur = self.manager.get_cursor()
@@ -185,6 +203,7 @@ class Recipe:
             servings,
             prep_time,
             name,
+            owner.uid,
             equipment,
             owner,
             ingredients,
@@ -207,7 +226,7 @@ class Recipe:
                 owner_id = %s
             WHERE
                 rid = %s;
-        """, (self.servings, self.time, self.name, self.owner.uid, self.rid))
+        """, (self.servings, self.time, self.name, self.owner_id, self.rid))
         self.manager.commit()
         cur.close()
 
