@@ -326,6 +326,11 @@ if __name__ == '__main__':
     for (recipe, count) in Recipe.get_popular_recipes(man, limit = 5):
         print(f'\t{recipe.name} was made by {count} different users')
 
+    # Print recipes per week
+    print("Recipes per week:")
+    for (week, count) in man.recipes_by_week():
+        print(f'\t{count} recipes were made the week of {week}')
+
     # Delete the new user (and consiquently all their recipes)
     print("Deleting min...")
     user_min.delete()

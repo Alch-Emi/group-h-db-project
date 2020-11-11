@@ -3,6 +3,9 @@ import db_init
 import os
 
 import psycopg2
+from typing import List, Tuple
+
+from datetime import date
 
 from model.recipe import Recipe
 
@@ -65,6 +68,23 @@ class RecipeManager:
         results = (Recipe.new_from_record(self, record) for record in cur.fetchall())
         cur.close()
         return results
+
+    def recipes_by_week(self, after = date(1970, 1, 1), limit = 999) -> List[Tuple[date, int]]:
+        cur = self.get_cursor()
+        cur.execute("""
+            SELECT
+                make_date(date_part('year', datemade)::int, 1, 1) + (7 * date_part('week', datemade)::int) as week,
+                COUNT(DISTINCT rid)
+            FROM dates_made
+            WHERE datemade > %s
+            GROUP BY week
+            ORDER BY week
+            LIMIT %s;
+        """, (after, limit))
+        results = cur.fetchall()
+        cur.close()
+        return results
+
 
     @staticmethod
     def new_from_env():
