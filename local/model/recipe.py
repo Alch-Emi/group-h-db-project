@@ -76,7 +76,7 @@ class Recipe:
             """, (self.rid,))
 
             self.cached_ingredients = dict(
-                (Ingredient(self.manager, *ingr_rec), ingr_rec[3])
+                (Ingredient(self.manager, *ingr_rec[:-1]), ingr_rec[3])
                 for ingr_rec in cur
             )
 
