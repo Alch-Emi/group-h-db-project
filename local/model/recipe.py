@@ -20,20 +20,13 @@ class Recipe:
         self.name = name
         self.equipment = equip
         self.owner = owner
-        self.ingredients = ingr
+        self.cached_ingredients = ingr
         self.steps = steps
 
     @staticmethod
     def new_from_record(manager, record):
         rid = record[0]
         cur = manager.get_cursor()
-
-        # Retrieve ingredients
-        cur.execute("SELECT iname,amount FROM requires_ingredient WHERE rid = %s;", (rid,))
-        ingredients = dict(
-            (Ingredient.get_ingredient(manager, ingr_rec[0]), ingr_rec[1])
-            for ingr_rec in cur
-        )
 
         # Retrieve steps
         cur.execute("""
@@ -61,9 +54,35 @@ class Recipe:
             record[3],
             equipment,
             owner,
-            ingredients,
+            None,
             steps
         )
+
+    @property
+    def ingredients(self):
+        if self.cached_ingredients == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve ingredients
+            cur.execute("""
+                SELECT ingredients.*, amount
+                FROM requires_ingredient
+                JOIN ingredients ON ingredients.iname = requires_ingredient.iname
+                WHERE rid = %s;
+            """, (self.rid,))
+
+            self.cached_ingredients = dict(
+                (Ingredient(self.manager, *ingr_rec), ingr_rec[3])
+                for ingr_rec in cur
+            )
+
+            cur.close()
+
+        return self.cached_ingredients
+
+    @ingredients.setter
+    def ingredients(self, new):
+        self.cached_ingredients = new
 
     def dates_made(self):
         cur = self.manager.get_cursor()
