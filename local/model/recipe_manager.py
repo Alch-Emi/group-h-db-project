@@ -18,27 +18,33 @@ class RecipeManager:
     def searchRecipes(self, name):
         cur = self.get_cursor()
         partialName = ['%' + x.strip() + '%' for x in name.split(' ')]
-        sqlQuery = "SELECT * FROM RECIPES WHERE "
-        for _ in partialName:
-            sqlQuery += "rName LIKE %s OR "
-        sqlQuery = sqlQuery[:-4] + ';'
+        sqlQuery = """
+            SELECT recipes.*, owner.*
+            FROM recipes
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
+            WHERE """ + " OR ".join(["rName LIKE %s"] * len(partialName)) + ";"
         cur.execute(sqlQuery, partialName)
         records = cur.fetchall()
         cur.close()
 
-        return (Recipe.new_from_record(self, record) for record in records)
+        return (Recipe.new_from_combined_record(self, record) for record in records)
 
     def search_by_ingredient(self, ingr, limit = 10):
         cur = self.get_cursor()
         cur.execute("""
-            SELECT recipes.*
+            SELECT recipes.*, owner.*
             FROM requires_ingredient
             JOIN recipes ON requires_ingredient.rid = recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
             WHERE iname = %s
             LIMIT %s;
         """, (ingr.iname, limit))
 
-        results = (Recipe.new_from_record(self, record) for record in cur.fetchall())
+        results = (Recipe.new_from_combined_record(self, record) for record in cur.fetchall())
         cur.close()
         return results
 
@@ -47,16 +53,20 @@ class RecipeManager:
         cur.execute("""
             SELECT
                 recipes.*,
+                owner.*,
                 MAX(datemade) as last_date
             FROM recipes
             JOIN dates_made ON recipes.rid = dates_made.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
             %%%
-            GROUP BY recipes.rid
+            GROUP BY recipes.rid, owner.uid
             ORDER BY last_date DESC
             LIMIT %s;
         """
         .replace('%%%', (
-            'WHERE uid = %s'
+            'WHERE dates_made.uid = %s'
             if user != None
             else ''
         )), (
@@ -65,7 +75,7 @@ class RecipeManager:
             else (user.uid, limit)
         ))
 
-        results = (Recipe.new_from_record(self, record) for record in cur.fetchall())
+        results = (Recipe.new_from_combined_record(self, record) for record in cur.fetchall())
         cur.close()
         return results
 

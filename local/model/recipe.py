@@ -298,21 +298,24 @@ class Recipe:
     def similar_by_makers(self, limit = 10) -> Generator[Tuple['Recipe', int], Any, Any]:
         cur = self.manager.get_cursor()
         cur.execute("""
-            SELECT recipes.*, COUNT(users.uid)
+            SELECT recipes.*, owner.*, COUNT(users.uid)
             FROM dates_made AS self_dates_made
             JOIN users ON users.uid = self_dates_made.uid
             JOIN dates_made
                 AS alt_dates_made
                 ON alt_dates_made.uid = users.uid
             JOIN recipes ON alt_dates_made.rid = recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
             WHERE self_dates_made.rid = %s
                 AND recipes.rid != %s
-            GROUP BY recipes.rid
+            GROUP BY recipes.rid, owner.uid
             ORDER BY COUNT(users.uid) DESC
             LIMIT %s;
         """, (self.rid, self.rid, limit))
 
-        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(self.manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
 
@@ -321,6 +324,7 @@ class Recipe:
         cur.execute("""
             SELECT
                 foreign_recipe.*,
+                foreign_owner.*,
                 COUNT(DISTINCT common_ingredients.iname)::float / COUNT(DISTINCT all_ingredients.iname)::float
                     AS similarity
             FROM recipes AS self_recipe
@@ -337,14 +341,17 @@ class Recipe:
                 AS all_ingredients
                 ON all_ingredients.rid = self_recipe.rid
                 OR all_ingredients.rid = foreign_recipe.rid
+            JOIN users
+                AS foreign_owner
+                ON foreign_owner.uid = foreign_recipe.owner_id
             WHERE self_recipe.rid = %s
                 AND foreign_recipe.rid != %s
-            GROUP BY foreign_recipe.rid
+            GROUP BY foreign_recipe.rid, foreign_owner.uid
             ORDER BY similarity DESC
             LIMIT %s;
         """, (self.rid, self.rid, limit))
 
-        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(self.manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
 
@@ -366,14 +373,18 @@ class Recipe:
         cur.execute("""
             SELECT
                 recipes.*,
+                owner.*,
                 COUNT(DISTINCT dates_made.uid) as n_users
             FROM recipes
             JOIN dates_made ON dates_made.rid = recipes.rid
-            GROUP BY recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
+            GROUP BY recipes.rid, owner.uid
             ORDER BY n_users DESC
             LIMIT %s;
         """, (limit,))
 
-        results = ((Recipe.new_from_record(manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
