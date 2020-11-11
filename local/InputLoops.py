@@ -10,7 +10,10 @@ from model.user import User
 from model.ingredient import Ingredient
 from model.recipe import Recipe
 
+import analytics
+
 import help
+import sys
 from state import State
 
 PROGRAM_STATE = State.MAIN #TODO change to State.LOGIN once log in functionality complete
@@ -1017,8 +1020,13 @@ def main():
         print("To run the database, the system must have a DATABASE environment variable defined with connection info to the database")
         return
 
-    LoginLoop()
-    MANAGER.disconnect()
+    if len(sys.argv) == 1:
+        LoginLoop()
+        MANAGER.disconnect()
+    elif len(sys.argv) == 2 and sys.argv[1] == "-a":
+        analytics.analytics(MANAGER)
+    else:
+        print("ERROR: Too many command line arguments")
 
 
 if __name__ == '__main__':
