@@ -3,3 +3,5 @@ cffi==1.14.3
 psycopg2==2.8.6
 pycparser==2.20
 six==1.15.0
+numpy==1.19.3
+matplotlib==3.3.2
