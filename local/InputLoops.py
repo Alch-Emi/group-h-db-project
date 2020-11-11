@@ -59,6 +59,7 @@ INGREDIENT_FLAG = "-i"
 
 COMPATIBLE = "compatible"
 RECENT = "recent"
+POPULAR = "popular"
 MY_RECENT = "myrecent"
 CREATE = "create"
 INVENTORY = "inventory"
@@ -724,6 +725,11 @@ def recent(tokens, optional=None):
     return RecipeListLoop(list(MANAGER.recent_recipes()))
 
 
+def popular(tokens, optional=None):
+
+    return RecipeListLoop(list(item[0] for item in Recipe.get_popular_recipes(MANAGER, 10)))
+
+
 def myRecent(tokens, optional=None):
     """
     Takes user to recipe list loop with list of their recently made recipes.
@@ -770,7 +776,8 @@ mainLoopCommands = {
     CREATE: createRecipe,
     INVENTORY: inventory,
     DELETE_RECIPE: deleteAccount,
-    MY_RECENT: myRecent
+    MY_RECENT: myRecent,
+    POPULAR: popular
 }
 
 loginCommands = {
