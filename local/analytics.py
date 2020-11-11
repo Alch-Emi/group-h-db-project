@@ -4,6 +4,7 @@ from model.ingredient import Ingredient
 from model.recipe import Recipe
 
 import matplotlib.pyplot as plt
+from textwrap import wrap
 
 
 """
@@ -32,5 +33,22 @@ def make_ingredients_graph(manager):
 
     plt.show()
 
+def top_10_recipes_graph(manager):
+    pairs = Recipe.get_popular_recipes(manager, 10)
+
+    X = []
+    Y = []
+
+    for rec, count in pairs:
+        X.append("\n".join(wrap(rec.name, 15)))
+        Y.append(count)
+
+    fig1, ax1 = plt.subplots()
+    ax1.set_title("Most Made Recipes this Week")
+    ax1.bar(height=Y, x=X, width=0.4)
+    plt.show()
+
+
 def analytics(manager):
     make_ingredients_graph(manager)
+    top_10_recipes_graph(manager)
