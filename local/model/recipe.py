@@ -200,13 +200,47 @@ class Recipe:
         """, (servings, prep_time, name, owner.uid))
         rid = cur.fetchone()[0]
 
-        execute_values(cur, """
+        insert_ingredients = """
             INSERT INTO requires_ingredient
-            VALUES %s;
-        """, [
-            (rid, ingredient[0].iname, ingredient[1])
-            for ingredient in ingredients.items()
-        ])
+            VALUES
+        """ + \
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s, %s)", (ingredient.iname, amt)).decode()
+                for (ingredient, amt)
+                in ingredients.items()
+            ]) + ";\n" if len(ingredients) > 0 else ""
+
+        insert_equipment = """
+            INSERT INTO requires_equipment
+            VALUES
+        """ + \
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s)", (ename,)).decode()
+                for ename
+                in equipment
+            ]) + ";\n" if len(equipment) > 0 else ""
+
+        insert_steps = """
+            INSERT INTO steps(rid, stepnum, description)
+            VALUES
+        """ +\
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s, %s)", step).decode()
+                for step
+                in enumerate(steps)
+            ]) +\
+\
+        """
+            ON CONFLICT (rid, stepnum) DO UPDATE SET description = EXCLUDED.description;
+        """ if len(steps) > 0 else ""
+
+        megaquery = insert_ingredients + insert_equipment + insert_steps
+
+        if len(megaquery):
+            cur.execute(megaquery)
 
         manager.commit()
         cur.close()
@@ -223,9 +257,6 @@ class Recipe:
             ingredients,
             steps
         )
-
-        recipe.save_equipment()
-        recipe.save_steps()
 
         return recipe
 
