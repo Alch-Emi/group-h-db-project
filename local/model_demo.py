@@ -311,6 +311,12 @@ if __name__ == '__main__':
     for recipe in man.search_by_ingredient(flour, limit = 99):
         print(f'\t{recipe.name}')
 
+    # Find common ingredients:
+    print("Most common ingredients:")
+    for (ingredient, count) in Ingredient.get_common_ingredients(man):
+        print(f'\t{ingredient.iname}: {count}')
+
+
     # Clean up
     user.delete()
     user_min.delete()

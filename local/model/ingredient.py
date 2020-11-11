@@ -64,3 +64,22 @@ class Ingredient:
 
         cur.close()
         return results
+
+    @staticmethod
+    def get_common_ingredients(manager):
+        cur = manager.get_cursor()
+        cur.execute("""
+            SELECT ingredients.iname, unit, storage_location, COUNT(rid)
+            FROM ingredients
+            JOIN requires_ingredient ON requires_ingredient.iname = ingredients.iname
+            GROUP BY ingredients.iname
+            ORDER BY COUNT(rid) DESC;
+        """)
+
+        results = [
+            (Ingredient(manager, result[0], result[1], result[2]), result[3])
+            for result in cur.fetchall()
+        ]
+
+        cur.close()
+        return results
