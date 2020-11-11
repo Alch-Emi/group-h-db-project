@@ -21,21 +21,13 @@ class Recipe:
         self.equipment = equip
         self.owner = owner
         self.cached_ingredients = ingr
-        self.steps = steps
+        self.cached_steps = steps
+        self.steps_changed = False
 
     @staticmethod
     def new_from_record(manager, record):
         rid = record[0]
         cur = manager.get_cursor()
-
-        # Retrieve steps
-        cur.execute("""
-            SELECT stepnum, description FROM steps WHERE rid = %s ORDER BY stepnum;
-        """, (rid,))
-        steps = [
-            step_rec[1]
-            for step_rec in cur
-        ]
 
         # Retrieve equipment
         cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (rid,))
@@ -55,7 +47,7 @@ class Recipe:
             equipment,
             owner,
             None,
-            steps
+            None
         )
 
     @property
@@ -83,6 +75,30 @@ class Recipe:
     @ingredients.setter
     def ingredients(self, new):
         self.cached_ingredients = new
+
+    @property
+    def steps(self):
+        if self.cached_steps == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve steps
+            cur.execute("""
+                SELECT stepnum, description FROM steps WHERE rid = %s ORDER BY stepnum;
+            """, (self.rid,))
+
+            self.cached_steps = [
+                step_rec[1]
+                for step_rec in cur
+            ]
+
+            cur.close()
+
+        return self.cached_steps
+
+    @steps.setter
+    def steps(self, new):
+        self.cached_steps = new
+        self.steps_changed = True
 
     def dates_made(self):
         cur = self.manager.get_cursor()
@@ -205,6 +221,9 @@ class Recipe:
         cur.close()
 
     def save_steps(self):
+        if self.cached_steps == None or not self.steps_changed:
+            return
+
         cur = self.manager.get_cursor()
 
         # Insert new values
@@ -214,7 +233,7 @@ class Recipe:
             ON CONFLICT (rid, stepnum) DO UPDATE SET description = EXCLUDED.description;
         """, [
             (self.rid, step[0], step[1])
-            for step in enumerate(self.steps)
+            for step in enumerate(self.cached_steps)
         ])
 
         # Clean out any old values
@@ -222,10 +241,12 @@ class Recipe:
             DELETE FROM steps
             WHERE rid = %s
                 AND stepnum >= %s;
-        """, (self.rid, len(self.steps)))
+        """, (self.rid, len(self.cached_steps)))
 
         self.manager.commit()
         cur.close()
+
+        self.steps_changed = False
 
     def similar_by_makers(self, limit = 10) -> Generator[Tuple['Recipe', int], Any, Any]:
         cur = self.manager.get_cursor()
