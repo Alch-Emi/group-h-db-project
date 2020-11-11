@@ -6,26 +6,33 @@ from model.recipe import Recipe
 
 class User:
     # If owned_ingredients is set to None, it will be populated from the database
-    def __init__(self, manager, uid, username, pass_hash, owned_ingredients):
+    def __init__(self, manager, uid, username, pass_hash, owned_ingredients = None):
         self.manager = manager
         self.uid = uid
         self.username = username
         self.pass_hash = pass_hash
+        self.cached_owned_ingredients = owned_ingredients
 
-        if owned_ingredients == None:
+    @property
+    def owned_ingredients(self):
+        if self.cached_owned_ingredients is None:
             cur = self.manager.get_cursor()
             cur.execute("""
                 SELECT iname,qtyowned
                 FROM ingredient_ownership
                 WHERE uid = %s;
             """, (self.uid,))
-            owned_ingredients = dict(
-                (Ingredient.get_ingredient(manager, record[0]), record[1])
+            self.cached_owned_ingredients = dict(
+                (Ingredient.get_ingredient(self.manager, record[0]), record[1])
                 for record in cur
             )
             cur.close()
 
-        self.owned_ingredients = owned_ingredients
+        return self.cached_owned_ingredients
+
+    @owned_ingredients.setter
+    def owned_ingredients(self, new):
+        self.cached_owned_ingredients = new
 
     def listDatesMade(self, recipe):
         cur = self.manager.get_cursor()
@@ -72,6 +79,9 @@ class User:
         cur.close()
 
     def save_owned_ingredients(self):
+        if self.cached_owned_ingredients is None:
+            return
+
         cur = self.manager.get_cursor()
         cur.execute("""
             BEGIN;
@@ -87,7 +97,7 @@ class User:
             COMMIT;
         """, (
             (self.uid, ingr.iname, quant)
-            for (ingr, quant) in self.owned_ingredients.items()
+            for (ingr, quant) in self.cached_owned_ingredients.items()
         ))
         self.manager.commit()
         cur.close()
