@@ -292,7 +292,7 @@ if __name__ == '__main__':
     print(f"{user.username}'s most compatible recipes are:")
     for (recipe, compatibility) in user.compatible_recipes():
        print(
-           f"\t{recipe.name}, for which thea has {compatibility * 100}% of the ingredients"
+           f"\t{recipe.name} by {recipe.owner.username}, for which thea has {compatibility * 100}% of the ingredients"
        )
 
     # Search recipes by ingredient

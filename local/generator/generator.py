@@ -196,7 +196,12 @@ def generate():
         print("====================")
         displayRecipe(rec)
 
-        Recipe.register_recipe(MANAGER, name, random.randrange(1, 4), random.randint(5, 360), list(selected_equips_dict.keys()), USER, ingredients_dict, recipe_steps)
+        Recipe.register_recipe(manager=MANAGER, name=name,
+                               servings=random.randrange(1, 4),
+                               time=random.randint(5, 360),
+                               equip=list(selected_equips_dict.keys()),
+                               owner=USER, ingr=ingredients_dict,
+                               steps=recipe_steps, owner_id=USER.uid)
         #def __init__(self, manager, rid, servings, time, name, equip, owner,
          #            ingr, steps)
 

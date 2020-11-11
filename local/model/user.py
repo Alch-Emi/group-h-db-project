@@ -6,26 +6,33 @@ from model.recipe import Recipe
 
 class User:
     # If owned_ingredients is set to None, it will be populated from the database
-    def __init__(self, manager, uid, username, pass_hash, owned_ingredients):
+    def __init__(self, manager, uid, username, pass_hash, owned_ingredients = None):
         self.manager = manager
         self.uid = uid
         self.username = username
         self.pass_hash = pass_hash
+        self.cached_owned_ingredients = owned_ingredients
 
-        if owned_ingredients == None:
+    @property
+    def owned_ingredients(self):
+        if self.cached_owned_ingredients is None:
             cur = self.manager.get_cursor()
             cur.execute("""
                 SELECT iname,qtyowned
                 FROM ingredient_ownership
                 WHERE uid = %s;
             """, (self.uid,))
-            owned_ingredients = dict(
-                (Ingredient.get_ingredient(manager, record[0]), record[1])
+            self.cached_owned_ingredients = dict(
+                (Ingredient.get_ingredient(self.manager, record[0]), record[1])
                 for record in cur
             )
             cur.close()
 
-        self.owned_ingredients = owned_ingredients
+        return self.cached_owned_ingredients
+
+    @owned_ingredients.setter
+    def owned_ingredients(self, new):
+        self.cached_owned_ingredients = new
 
     def listDatesMade(self, recipe):
         cur = self.manager.get_cursor()
@@ -72,6 +79,9 @@ class User:
         cur.close()
 
     def save_owned_ingredients(self):
+        if self.cached_owned_ingredients is None:
+            return
+
         cur = self.manager.get_cursor()
         cur.execute("""
             BEGIN;
@@ -87,7 +97,7 @@ class User:
             COMMIT;
         """, (
             (self.uid, ingr.iname, quant)
-            for (ingr, quant) in self.owned_ingredients.items()
+            for (ingr, quant) in self.cached_owned_ingredients.items()
         ))
         self.manager.commit()
         cur.close()
@@ -175,29 +185,31 @@ class User:
         cur.execute("""
             SELECT
                 recipes.*,
+                owner.*,
                 SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
                     SELECT COUNT(iname)
                     FROM requires_ingredient
                     WHERE requires_ingredient.rid = recipes.rid
                 ) AS percent_owned
-            FROM users
-            JOIN ingredient_ownership
-                ON ingredient_ownership.uid = users.uid
+            FROM ingredient_ownership
             JOIN requires_ingredient
                 AS ownd_comp
                 ON ownd_comp.iname = ingredient_ownership.iname
             JOIN recipes
                 ON ownd_comp.rid = recipes.rid
-            WHERE users.uid = %s
-            GROUP BY recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
+            WHERE ingredient_ownership.uid = %s
+            GROUP BY recipes.rid, owner.uid
             ORDER BY percent_owned DESC
             LIMIT %s;
         """, (self.uid, limit))
 
         results = (
             (
-                Recipe.new_from_record(self.manager, record),
-                record[5]
+                Recipe.new_from_combined_record(self.manager, record),
+                record[8]
             )
             for record in cur.fetchall()
         )

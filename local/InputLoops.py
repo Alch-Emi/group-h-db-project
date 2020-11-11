@@ -502,7 +502,8 @@ def removeEquipment(tokens, recipe):
 
 def createRecipe(tokens, optional=None):
     return RecipeCreateLoop(
-        Recipe(MANAGER, None, None, None, tokens[1], [], USER, {}, [])
+        Recipe(manager=MANAGER, rid=None, servings=None, time=None, name=tokens[1],
+               owner_id=USER.uid, equip=[], owner=USER, ingr={}, steps=[])
     )
 
 

@@ -12,58 +12,134 @@ from typing import Generator
 from typing import Any
 
 class Recipe:
-    def __init__(self, manager, rid, servings, time, name, equip, owner, ingr, steps):
+    def __init__(
+        self,
+        manager,
+        rid,
+        servings,
+        time,
+        name,
+        owner_id,
+        equip = None,
+        owner = None,
+        ingr = None,
+        steps = None
+    ):
         self.manager = manager
         self.rid = rid
         self.servings = servings
         self.time = time
         self.name = name
-        self.equipment = equip
-        self.owner = owner
-        self.ingredients = ingr
-        self.steps = steps
+        self.cached_equip = equip
+        self.owner_id = owner_id
+        self.cached_owner = owner
+        self.cached_ingredients = ingr
+        self.cached_steps = steps
 
     @staticmethod
     def new_from_record(manager, record):
-        rid = record[0]
-        cur = manager.get_cursor()
-
-        # Retrieve ingredients
-        cur.execute("SELECT iname,amount FROM requires_ingredient WHERE rid = %s;", (rid,))
-        ingredients = dict(
-            (Ingredient.get_ingredient(manager, ingr_rec[0]), ingr_rec[1])
-            for ingr_rec in cur
-        )
-
-        # Retrieve steps
-        cur.execute("""
-            SELECT stepnum, description FROM steps WHERE rid = %s ORDER BY stepnum;
-        """, (rid,))
-        steps = [
-            step_rec[1]
-            for step_rec in cur
-        ]
-
-        # Retrieve equipment
-        cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (rid,))
-        equipment = [e for (e,) in cur]
-        cur.close()
-
-        # Retrieve owner
-        owner = user.User.get_user_by_uid(manager, record[4])
-
         # Produce recipe
         return Recipe(
             manager,
-            rid,
+            record[0],
             record[1],
             record[2],
             record[3],
-            equipment,
-            owner,
-            ingredients,
-            steps
+            record[4]
         )
+
+    @staticmethod
+    def new_from_combined_record(manager, record):
+        owner = user.User(manager, record[5], record[6], record[7])
+        # Produce recipe
+        return Recipe(
+            manager,
+            record[0],
+            record[1],
+            record[2],
+            record[3],
+            record[4],
+            owner = owner
+        )
+
+    @property
+    def ingredients(self):
+        if self.cached_ingredients == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve ingredients
+            cur.execute("""
+                SELECT ingredients.*, amount
+                FROM requires_ingredient
+                JOIN ingredients ON ingredients.iname = requires_ingredient.iname
+                WHERE rid = %s;
+            """, (self.rid,))
+
+            self.cached_ingredients = dict(
+                (Ingredient(self.manager, *ingr_rec[:-1]), ingr_rec[3])
+                for ingr_rec in cur
+            )
+
+            cur.close()
+
+        return self.cached_ingredients
+
+    @ingredients.setter
+    def ingredients(self, new):
+        self.cached_ingredients = new
+
+    @property
+    def steps(self):
+        if self.cached_steps == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve steps
+            cur.execute("""
+                SELECT stepnum, description FROM steps WHERE rid = %s ORDER BY stepnum;
+            """, (self.rid,))
+
+            self.cached_steps = [
+                step_rec[1]
+                for step_rec in cur
+            ]
+
+            cur.close()
+
+        return self.cached_steps
+
+    @steps.setter
+    def steps(self, new):
+        self.cached_steps = new
+
+    @property
+    def equipment(self):
+        if self.cached_equip == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve equipment
+            cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (self.rid,))
+            self.cached_equip = [e for (e,) in cur]
+
+            cur.close()
+
+        return self.cached_equip
+
+    @equipment.setter
+    def equipment(self, new):
+        self.cached_equip = new
+
+    @property
+    def owner(self):
+        if self.cached_owner == None and self.owner_id != None:
+            # Retrieve owner
+            self.cached_owner = user.User.get_user_by_uid(self.manager, self.owner_id)
+
+        return self.cached_owner
+
+    @owner.setter
+    def owner(self, new):
+        self.cached_owner = new
+        self.owner_id = new.uid
 
     def dates_made(self):
         cur = self.manager.get_cursor()
@@ -124,13 +200,47 @@ class Recipe:
         """, (servings, prep_time, name, owner.uid))
         rid = cur.fetchone()[0]
 
-        execute_values(cur, """
+        insert_ingredients = """
             INSERT INTO requires_ingredient
-            VALUES %s;
-        """, [
-            (rid, ingredient[0].iname, ingredient[1])
-            for ingredient in ingredients.items()
-        ])
+            VALUES
+        """ + \
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s, %s)", (ingredient.iname, amt)).decode()
+                for (ingredient, amt)
+                in ingredients.items()
+            ]) + ";\n" if len(ingredients) > 0 else ""
+
+        insert_equipment = """
+            INSERT INTO requires_equipment
+            VALUES
+        """ + \
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s)", (ename,)).decode()
+                for ename
+                in equipment
+            ]) + ";\n" if len(equipment) > 0 else ""
+
+        insert_steps = """
+            INSERT INTO steps(rid, stepnum, description)
+            VALUES
+        """ +\
+\
+        ", ".join([
+                cur.mogrify(f"({rid}, %s, %s)", step).decode()
+                for step
+                in enumerate(steps)
+            ]) +\
+\
+        """
+            ON CONFLICT (rid, stepnum) DO UPDATE SET description = EXCLUDED.description;
+        """ if len(steps) > 0 else ""
+
+        megaquery = insert_ingredients + insert_equipment + insert_steps
+
+        if len(megaquery):
+            cur.execute(megaquery)
 
         manager.commit()
         cur.close()
@@ -141,14 +251,12 @@ class Recipe:
             servings,
             prep_time,
             name,
+            owner.uid,
             equipment,
             owner,
             ingredients,
             steps
         )
-
-        recipe.save_equipment()
-        recipe.save_steps()
 
         return recipe
 
@@ -163,11 +271,14 @@ class Recipe:
                 owner_id = %s
             WHERE
                 rid = %s;
-        """, (self.servings, self.time, self.name, self.owner.uid, self.rid))
+        """, (self.servings, self.time, self.name, self.owner_id, self.rid))
         self.manager.commit()
         cur.close()
 
     def save_equipment(self):
+        if self.cached_equip == None:
+            return
+
         cur = self.manager.get_cursor()
 
         # Clean out any old values
@@ -180,12 +291,17 @@ class Recipe:
         execute_values(cur, """
             INSERT INTO requires_equipment
             VALUES %s;
-        """, [(self.rid, ename) for ename in self.equipment])
+        """, [(self.rid, ename) for ename in self.cached_equip])
 
         self.manager.commit()
         cur.close()
 
+        self.equip_changed = False
+
     def save_steps(self):
+        if self.cached_steps == None:
+            return
+
         cur = self.manager.get_cursor()
 
         # Insert new values
@@ -195,7 +311,7 @@ class Recipe:
             ON CONFLICT (rid, stepnum) DO UPDATE SET description = EXCLUDED.description;
         """, [
             (self.rid, step[0], step[1])
-            for step in enumerate(self.steps)
+            for step in enumerate(self.cached_steps)
         ])
 
         # Clean out any old values
@@ -203,29 +319,34 @@ class Recipe:
             DELETE FROM steps
             WHERE rid = %s
                 AND stepnum >= %s;
-        """, (self.rid, len(self.steps)))
+        """, (self.rid, len(self.cached_steps)))
 
         self.manager.commit()
         cur.close()
 
+        self.steps_changed = False
+
     def similar_by_makers(self, limit = 10) -> Generator[Tuple['Recipe', int], Any, Any]:
         cur = self.manager.get_cursor()
         cur.execute("""
-            SELECT recipes.*, COUNT(users.uid)
+            SELECT recipes.*, owner.*, COUNT(users.uid)
             FROM dates_made AS self_dates_made
             JOIN users ON users.uid = self_dates_made.uid
             JOIN dates_made
                 AS alt_dates_made
                 ON alt_dates_made.uid = users.uid
             JOIN recipes ON alt_dates_made.rid = recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
             WHERE self_dates_made.rid = %s
                 AND recipes.rid != %s
-            GROUP BY recipes.rid
+            GROUP BY recipes.rid, owner.uid
             ORDER BY COUNT(users.uid) DESC
             LIMIT %s;
         """, (self.rid, self.rid, limit))
 
-        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(self.manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
 
@@ -234,12 +355,10 @@ class Recipe:
         cur.execute("""
             SELECT
                 foreign_recipe.*,
+                foreign_owner.*,
                 COUNT(DISTINCT common_ingredients.iname)::float / COUNT(DISTINCT all_ingredients.iname)::float
                     AS similarity
-            FROM recipes AS self_recipe
-            JOIN requires_ingredient
-                AS self_ingredients
-                ON self_ingredients.rid = self_recipe.rid
+            FROM requires_ingredient AS self_ingredients
             JOIN requires_ingredient
                 AS common_ingredients
                 ON common_ingredients.iname = self_ingredients.iname
@@ -248,16 +367,19 @@ class Recipe:
                 ON foreign_recipe.rid = common_ingredients.rid
             JOIN requires_ingredient
                 AS all_ingredients
-                ON all_ingredients.rid = self_recipe.rid
+                ON all_ingredients.rid = %s
                 OR all_ingredients.rid = foreign_recipe.rid
-            WHERE self_recipe.rid = %s
+            JOIN users
+                AS foreign_owner
+                ON foreign_owner.uid = foreign_recipe.owner_id
+            WHERE self_ingredients.rid = %s
                 AND foreign_recipe.rid != %s
-            GROUP BY foreign_recipe.rid
+            GROUP BY foreign_recipe.rid, foreign_owner.uid
             ORDER BY similarity DESC
             LIMIT %s;
-        """, (self.rid, self.rid, limit))
+        """, (self.rid, self.rid, self.rid, limit))
 
-        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(self.manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
 
@@ -279,14 +401,18 @@ class Recipe:
         cur.execute("""
             SELECT
                 recipes.*,
+                owner.*,
                 COUNT(DISTINCT dates_made.uid) as n_users
             FROM recipes
             JOIN dates_made ON dates_made.rid = recipes.rid
-            GROUP BY recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
+            GROUP BY recipes.rid, owner.uid
             ORDER BY n_users DESC
             LIMIT %s;
         """, (limit,))
 
-        results = ((Recipe.new_from_record(manager, record), record[5]) for record in cur.fetchall())
+        results = ((Recipe.new_from_combined_record(manager, record), record[8]) for record in cur.fetchall())
         cur.close()
         return results
