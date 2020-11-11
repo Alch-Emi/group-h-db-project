@@ -22,8 +22,6 @@ class Recipe:
         self.owner = owner
         self.cached_ingredients = ingr
         self.cached_steps = steps
-        self.steps_changed = False
-        self.equip_changed = False
 
     @staticmethod
     def new_from_record(manager, record):
@@ -93,7 +91,6 @@ class Recipe:
     @steps.setter
     def steps(self, new):
         self.cached_steps = new
-        self.steps_changed = True
 
     @property
     def equipment(self):
@@ -111,7 +108,6 @@ class Recipe:
     @equipment.setter
     def equipment(self, new):
         self.cached_equip = new
-        self.equip_changed = True
 
     def dates_made(self):
         cur = self.manager.get_cursor()
@@ -216,7 +212,7 @@ class Recipe:
         cur.close()
 
     def save_equipment(self):
-        if self.cached_equip == None or not self.equip_changed:
+        if self.cached_equip == None:
             return
 
         cur = self.manager.get_cursor()
@@ -239,7 +235,7 @@ class Recipe:
         self.equip_changed = False
 
     def save_steps(self):
-        if self.cached_steps == None or not self.steps_changed:
+        if self.cached_steps == None:
             return
 
         cur = self.manager.get_cursor()
