@@ -191,9 +191,7 @@ class User:
                     FROM requires_ingredient
                     WHERE requires_ingredient.rid = recipes.rid
                 ) AS percent_owned
-            FROM users
-            JOIN ingredient_ownership
-                ON ingredient_ownership.uid = users.uid
+            FROM ingredient_ownership
             JOIN requires_ingredient
                 AS ownd_comp
                 ON ownd_comp.iname = ingredient_ownership.iname
@@ -202,7 +200,7 @@ class User:
             JOIN users
                 AS owner
                 ON owner.uid = recipes.owner_id
-            WHERE users.uid = %s
+            WHERE ingredient_ownership.uid = %s
             GROUP BY recipes.rid, owner.uid
             ORDER BY percent_owned DESC
             LIMIT %s;

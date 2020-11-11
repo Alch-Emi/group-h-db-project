@@ -327,10 +327,7 @@ class Recipe:
                 foreign_owner.*,
                 COUNT(DISTINCT common_ingredients.iname)::float / COUNT(DISTINCT all_ingredients.iname)::float
                     AS similarity
-            FROM recipes AS self_recipe
-            JOIN requires_ingredient
-                AS self_ingredients
-                ON self_ingredients.rid = self_recipe.rid
+            FROM requires_ingredient AS self_ingredients
             JOIN requires_ingredient
                 AS common_ingredients
                 ON common_ingredients.iname = self_ingredients.iname
@@ -339,17 +336,17 @@ class Recipe:
                 ON foreign_recipe.rid = common_ingredients.rid
             JOIN requires_ingredient
                 AS all_ingredients
-                ON all_ingredients.rid = self_recipe.rid
+                ON all_ingredients.rid = %s
                 OR all_ingredients.rid = foreign_recipe.rid
             JOIN users
                 AS foreign_owner
                 ON foreign_owner.uid = foreign_recipe.owner_id
-            WHERE self_recipe.rid = %s
+            WHERE self_ingredients.rid = %s
                 AND foreign_recipe.rid != %s
             GROUP BY foreign_recipe.rid, foreign_owner.uid
             ORDER BY similarity DESC
             LIMIT %s;
-        """, (self.rid, self.rid, limit))
+        """, (self.rid, self.rid, self.rid, limit))
 
         results = ((Recipe.new_from_combined_record(self.manager, record), record[8]) for record in cur.fetchall())
         cur.close()
