@@ -321,6 +321,11 @@ if __name__ == '__main__':
             f'\t{recipe.name} ({count * 100}% similar ingredients to Pancakes!)'
         )
 
+    # Find popular recipes
+    print("Some popular recipes:")
+    for (recipe, count) in Recipe.get_popular_recipes(man, limit = 5):
+        print(f'\t{recipe.name} was made by {count} different users')
+
     # Delete the new user (and consiquently all their recipes)
     print("Deleting min...")
     user_min.delete()

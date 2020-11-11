@@ -272,3 +272,21 @@ class Recipe:
         """, [self.rid] * 4)
         self.manager.commit()
         cur.close()
+
+    @staticmethod
+    def get_popular_recipes(manager, limit = 10) -> Generator[Tuple['Recipe', int], Any, Any]:
+        cur = manager.get_cursor()
+        cur.execute("""
+            SELECT
+                recipes.*,
+                COUNT(DISTINCT dates_made.uid) as n_users
+            FROM recipes
+            JOIN dates_made ON dates_made.rid = recipes.rid
+            GROUP BY recipes.rid
+            ORDER BY n_users DESC
+            LIMIT %s;
+        """, (limit,))
+
+        results = ((Recipe.new_from_record(manager, record), record[5]) for record in cur.fetchall())
+        cur.close()
+        return results
