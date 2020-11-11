@@ -152,9 +152,12 @@ class User:
             DELETE FROM ingredient_ownership
             WHERE uid = %s;
 
+            DELETE FROM dates_made
+            WHERE uid = %s;
+
             DELETE FROM users
             WHERE uid = %s;
-        """, [self.uid] * 6)
+        """, [self.uid] * 7)
 
         self.manager.commit()
         cur.close()
