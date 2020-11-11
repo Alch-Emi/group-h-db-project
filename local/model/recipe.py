@@ -18,21 +18,16 @@ class Recipe:
         self.servings = servings
         self.time = time
         self.name = name
-        self.equipment = equip
+        self.cached_equip = equip
         self.owner = owner
         self.cached_ingredients = ingr
         self.cached_steps = steps
         self.steps_changed = False
+        self.equip_changed = False
 
     @staticmethod
     def new_from_record(manager, record):
         rid = record[0]
-        cur = manager.get_cursor()
-
-        # Retrieve equipment
-        cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (rid,))
-        equipment = [e for (e,) in cur]
-        cur.close()
 
         # Retrieve owner
         owner = user.User.get_user_by_uid(manager, record[4])
@@ -44,7 +39,7 @@ class Recipe:
             record[1],
             record[2],
             record[3],
-            equipment,
+            None,
             owner,
             None,
             None
@@ -99,6 +94,24 @@ class Recipe:
     def steps(self, new):
         self.cached_steps = new
         self.steps_changed = True
+
+    @property
+    def equipment(self):
+        if self.cached_equip == None:
+            cur = self.manager.get_cursor()
+
+            # Retrieve equipment
+            cur.execute("SELECT ename FROM requires_equipment WHERE rid = %s;", (self.rid,))
+            self.cached_equip = [e for (e,) in cur]
+
+            cur.close()
+
+        return self.cached_equip
+
+    @equipment.setter
+    def equipment(self, new):
+        self.cached_equip = new
+        self.equip_changed = True
 
     def dates_made(self):
         cur = self.manager.get_cursor()
@@ -203,6 +216,9 @@ class Recipe:
         cur.close()
 
     def save_equipment(self):
+        if self.cached_equip == None or not self.equip_changed:
+            return
+
         cur = self.manager.get_cursor()
 
         # Clean out any old values
@@ -215,10 +231,12 @@ class Recipe:
         execute_values(cur, """
             INSERT INTO requires_equipment
             VALUES %s;
-        """, [(self.rid, ename) for ename in self.equipment])
+        """, [(self.rid, ename) for ename in self.cached_equip])
 
         self.manager.commit()
         cur.close()
+
+        self.equip_changed = False
 
     def save_steps(self):
         if self.cached_steps == None or not self.steps_changed:
