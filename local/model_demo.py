@@ -216,14 +216,14 @@ if __name__ == '__main__':
     print(f"Sugar water successfully deleted: {not in_database}")
 
     # Create a new user with one recipe
-    new_user = User.register_new_user(man, "min", "haha i know min's password")
+    user_min = User.register_new_user(man, "min", "haha i know min's password")
     sugar_water = Recipe.register_recipe(
         man,
         'Sugar Water',
         1,
         2,
         [],
-        new_user,
+        user_min,
         {
             water: 2,
             sugar: 2,
@@ -236,16 +236,6 @@ if __name__ == '__main__':
     print(f"User min created: {min_exists}")
     sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0
     print(f"Sugar water created for min: {sugar_water_exists}")
-    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0
-    print(f"Pancakes still exist: {pancakes_exist}")
-
-    # Delete the new user (and consiquently all their recipes)
-    print("Deleting min...")
-    new_user.delete()
-    min_exists = User.get_user(man, "min") != None
-    print(f"User min exists: {min_exists}")
-    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0
-    print(f"Sugar water exists: {sugar_water_exists}")
     pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0
     print(f"Pancakes still exist: {pancakes_exist}")
 
@@ -274,7 +264,6 @@ if __name__ == '__main__':
 
     # Get recent recipes
     # Set up: Create a bunch of demo recipes, and prepare them in order
-    user_min = User.register_new_user(man, "min", "haha i know min's password")
     demo_recipes = [
         Recipe.register_recipe(man, f"Demo Recipe {n}", 1, 2, [], user, {}, [])
         for n in range(0,4)
@@ -315,6 +304,25 @@ if __name__ == '__main__':
     print("Most common ingredients:")
     for (ingredient, count) in Ingredient.get_common_ingredients(man):
         print(f'\t{ingredient.iname}: {count}')
+
+    # Find similar recipes (by number of common makers)
+    pancakes.mark_made(user_min)
+    print(f'{user_min.username} made recipe {pancakes.name}')
+    print("Recipes similar to Demo Recipe 0 (by users):")
+    for (recipe, count) in demo_recipes[0].similar_by_makers():
+        print(
+            f'\t{recipe.name} ({count} people who have made Demo Recipe 0 have also made {recipe.name})'
+        )
+
+    # Delete the new user (and consiquently all their recipes)
+    print("Deleting min...")
+    user_min.delete()
+    min_exists = User.get_user(man, "min") != None
+    print(f"User min exists: {min_exists}")
+    sugar_water_exists = len(list(man.searchRecipes("Sugar Water"))) > 0
+    print(f"Sugar water exists: {sugar_water_exists}")
+    pancakes_exist = len(list(man.searchRecipes("Pancakes"))) > 0
+    print(f"Pancakes still exist: {pancakes_exist}")
 
 
     # Clean up

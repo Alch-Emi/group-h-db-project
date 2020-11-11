@@ -6,6 +6,11 @@ from psycopg2.extras import execute_values
 from model.ingredient import *
 from model import user
 
+from typing import List
+from typing import Tuple
+from typing import Generator
+from typing import Any
+
 class Recipe:
     def __init__(self, manager, rid, servings, time, name, equip, owner, ingr, steps):
         self.manager = manager
@@ -202,6 +207,27 @@ class Recipe:
 
         self.manager.commit()
         cur.close()
+
+    def similar_by_makers(self, limit = 10) -> Generator[Tuple['Recipe', int], Any, Any]:
+        cur = self.manager.get_cursor()
+        cur.execute("""
+            SELECT recipes.*, COUNT(users.uid)
+            FROM dates_made AS self_dates_made
+            JOIN users ON users.uid = self_dates_made.uid
+            JOIN dates_made
+                AS alt_dates_made
+                ON alt_dates_made.uid = users.uid
+            JOIN recipes ON alt_dates_made.rid = recipes.rid
+            WHERE self_dates_made.rid = %s
+                AND recipes.rid != %s
+            GROUP BY recipes.rid
+            ORDER BY COUNT(users.uid) DESC
+            LIMIT %s;
+        """, (self.rid, self.rid, limit))
+
+        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        cur.close()
+        return results
 
     def delete(self):
         cur = self.manager.get_cursor()
