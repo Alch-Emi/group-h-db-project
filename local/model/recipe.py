@@ -48,6 +48,20 @@ class Recipe:
             record[4]
         )
 
+    @staticmethod
+    def new_from_combined_record(manager, record):
+        owner = user.User(manager, record[5], record[6], record[7])
+        # Produce recipe
+        return Recipe(
+            manager,
+            record[0],
+            record[1],
+            record[2],
+            record[3],
+            record[4],
+            owner = owner
+        )
+
     @property
     def ingredients(self):
         if self.cached_ingredients == None:

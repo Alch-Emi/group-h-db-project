@@ -185,6 +185,7 @@ class User:
         cur.execute("""
             SELECT
                 recipes.*,
+                owner.*,
                 SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
                     SELECT COUNT(iname)
                     FROM requires_ingredient
@@ -198,16 +199,19 @@ class User:
                 ON ownd_comp.iname = ingredient_ownership.iname
             JOIN recipes
                 ON ownd_comp.rid = recipes.rid
+            JOIN users
+                AS owner
+                ON owner.uid = recipes.owner_id
             WHERE users.uid = %s
-            GROUP BY recipes.rid
+            GROUP BY recipes.rid, owner.uid
             ORDER BY percent_owned DESC
             LIMIT %s;
         """, (self.uid, limit))
 
         results = (
             (
-                Recipe.new_from_record(self.manager, record),
-                record[5]
+                Recipe.new_from_combined_record(self.manager, record),
+                record[8]
             )
             for record in cur.fetchall()
         )
