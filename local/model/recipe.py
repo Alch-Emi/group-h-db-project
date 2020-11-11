@@ -229,6 +229,38 @@ class Recipe:
         cur.close()
         return results
 
+    def similar_by_ingredient(self, limit = 10) -> Generator[Tuple['Recipe', float], Any, Any]:
+        cur = self.manager.get_cursor()
+        cur.execute("""
+            SELECT
+                foreign_recipe.*,
+                COUNT(DISTINCT common_ingredients.iname)::float / COUNT(DISTINCT all_ingredients.iname)::float
+                    AS similarity
+            FROM recipes AS self_recipe
+            JOIN requires_ingredient
+                AS self_ingredients
+                ON self_ingredients.rid = self_recipe.rid
+            JOIN requires_ingredient
+                AS common_ingredients
+                ON common_ingredients.iname = self_ingredients.iname
+            JOIN recipes
+                AS foreign_recipe
+                ON foreign_recipe.rid = common_ingredients.rid
+            JOIN requires_ingredient
+                AS all_ingredients
+                ON all_ingredients.rid = self_recipe.rid
+                OR all_ingredients.rid = foreign_recipe.rid
+            WHERE self_recipe.rid = %s
+                AND foreign_recipe.rid != %s
+            GROUP BY foreign_recipe.rid
+            ORDER BY similarity DESC
+            LIMIT %s;
+        """, (self.rid, self.rid, limit))
+
+        results = ((Recipe.new_from_record(self.manager, record), record[5]) for record in cur.fetchall())
+        cur.close()
+        return results
+
     def delete(self):
         cur = self.manager.get_cursor()
 

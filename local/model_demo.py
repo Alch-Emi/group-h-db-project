@@ -314,6 +314,13 @@ if __name__ == '__main__':
             f'\t{recipe.name} ({count} people who have made Demo Recipe 0 have also made {recipe.name})'
         )
 
+    # Find similar recipes (by number of common ingredients)
+    print("Recipes similar to Pancakes! (by ingredient):")
+    for (recipe, count) in pancakes.similar_by_ingredient():
+        print(
+            f'\t{recipe.name} ({count * 100}% similar ingredients to Pancakes!)'
+        )
+
     # Delete the new user (and consiquently all their recipes)
     print("Deleting min...")
     user_min.delete()
