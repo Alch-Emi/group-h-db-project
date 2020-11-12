@@ -1030,12 +1030,13 @@ def main():
 
     if len(sys.argv) == 1:
         LoginLoop()
-        MANAGER.disconnect()
     elif len(sys.argv) == 2 and sys.argv[1] == "-a":
         analytics.analytics(MANAGER)
     else:
         print("ERROR: Too many command line arguments")
+        exit()
 
+    MANAGER.disconnect()
 
 if __name__ == '__main__':
     main()

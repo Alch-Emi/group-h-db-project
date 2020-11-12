@@ -49,6 +49,24 @@ def top_10_recipes_graph(manager):
     plt.show()
 
 
+def recipes_by_week_graph(manager):
+    pairs = manager.recipes_by_week()
+
+    X = []
+    Y = []
+
+    for week, count in pairs:
+        X.append(week)
+        Y.append(count)
+
+    fig1, ax1 = plt.subplots()
+    ax1.set_title("Recipes Made Weekly")
+    plt.plot(X, Y)
+    plt.xticks(X)
+    plt.show()
+
+
 def analytics(manager):
     make_ingredients_graph(manager)
     top_10_recipes_graph(manager)
+    recipes_by_week_graph(manager)
