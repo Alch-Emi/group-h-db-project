@@ -331,6 +331,11 @@ if __name__ == '__main__':
     for (week, count) in man.recipes_by_week():
         print(f'\t{count} recipes were made the week of {week}')
 
+    # Recommend recipes for user
+    print("Your recommended recipes:")
+    for (recipe, owned, score) in user.recommended_recipes():
+        print(f'\t{recipe.name}, of which {user.username} has {owned * 100}% of the ingredients, and which scored {score}')
+
     # Delete the new user (and consiquently all their recipes)
     print("Deleting min...")
     user_min.delete()

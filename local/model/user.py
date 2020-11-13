@@ -216,3 +216,82 @@ class User:
 
         cur.close()
         return results
+
+    def recommended_recipes(self, limit = 10):
+        cur = self.manager.get_cursor()
+
+        cur.execute("""
+            WITH user_commonality AS (
+                SELECT
+                    others_made.uid as uid,
+                    COUNT(others_made.rid)::float / (
+                        SELECT COUNT(rid)
+                        FROM dates_made
+                        WHERE uid = others_made.uid
+                            OR uid = %s
+                    ) AS percent_shared
+                FROM dates_made AS personally_made
+                JOIN dates_made
+                    AS others_made
+                    ON others_made.rid = personally_made.rid
+                WHERE personally_made.uid = %s
+                    AND others_made.uid != %s
+                GROUP BY others_made.uid
+            ),
+            users_by_recipe AS (
+                SELECT
+                    uid,
+                    rid,
+                    LOG(COUNT(id)) + 1 as degree
+                FROM dates_made
+                GROUP BY uid, rid
+            ),
+            recipe_ownership AS (
+                SELECT
+                    recipes.rid,
+                    SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
+                        SELECT COUNT(iname)
+                        FROM requires_ingredient
+                        WHERE requires_ingredient.rid = recipes.rid
+                    ) AS percent_owned
+                FROM ingredient_ownership
+                JOIN requires_ingredient
+                    AS ownd_comp
+                    ON ownd_comp.iname = ingredient_ownership.iname
+                JOIN recipes
+                    ON ownd_comp.rid = recipes.rid
+                WHERE ingredient_ownership.uid = %s
+                GROUP BY recipes.rid
+            ),
+            scores AS (
+                SELECT
+                    users_by_recipe.rid,
+                    SUM(user_commonality.percent_shared * users_by_recipe.degree) as score,
+                    SUM(percent_owned) AS percent_owned
+                FROM users_by_recipe
+                JOIN user_commonality ON users_by_recipe.uid = user_commonality.uid
+                JOIN recipe_ownership ON users_by_recipe.rid = recipe_ownership.rid
+                GROUP BY users_by_recipe.rid
+            )
+            SELECT
+                recipes.*,
+                users.*,
+                percent_owned,
+                (percent_owned/2 + 0.5) * score AS recommendation_degree
+            FROM scores
+            JOIN recipes ON recipes.rid = scores.rid
+            JOIN users ON recipes.owner_id = users.uid
+            ORDER BY recommendation_degree DESC;
+        """, [self.uid] * 4)
+
+        results = (
+            (
+                Recipe.new_from_combined_record(self.manager, record),
+                record[8],
+                record[9]
+            )
+            for record in cur.fetchall()
+        )
+
+        cur.close()
+        return results
