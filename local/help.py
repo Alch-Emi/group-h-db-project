@@ -21,7 +21,8 @@ MAIN_HELP = \
     "> compatible (returns list of recipes that share ingredients with your storage)\n" \
     "> create 'name' (creates a recipe with the given name)\n" \
     "> inventory 'storage location' (returns a list of ingredients stored at the given location)\n" \
-    "> delete (delete the account that's signed in and all associated recipes)\n"
+    "> delete (delete the account that's signed in and all associated recipes)\n" \
+    "> popular (finds the recipes that were made the most the past week)"
 
 LOGIN_HELP = \
     "> login 'username' 'password'\n" \
@@ -34,6 +35,8 @@ RECIPE_VIEW_HELP = \
     "> make (marks recipe as made)\n" \
     "> edit (edits the recipe)\n" \
     "> delete (deletes the recipe)\n" \
+    "> similar (finds recipes with similar ingredients\n" \
+    "> recommended (finds recipes also made by users who made this one)\n"
 
 RECIPE_LIST_HELP = \
     "> select # (view recipe listed as number '#')\n" \

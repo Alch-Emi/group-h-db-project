@@ -35,7 +35,7 @@ def make_ingredients_graph(manager):
     plt.show()
 
 def top_10_recipes_graph(manager):
-    pairs = Recipe.get_popular_recipes(manager, 10)
+    pairs = Recipe.get_popular_recipes(manager, 5)
 
     X = []
     Y = []

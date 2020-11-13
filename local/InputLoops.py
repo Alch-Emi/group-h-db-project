@@ -85,6 +85,8 @@ HALVE = "halve"
 DOUBLE = "double"
 DELETE_RECIPE = "delete"
 EDIT_RECIPE = "edit"
+SIMILAR = "similar"
+RECOMMENDED = "recommended"
 
 #Ingredient List Commands
 ADD_INGREDIENT = "add"
@@ -263,6 +265,12 @@ def deleteRecipe(tokens, recipe):
 
 
 def editRecipe(tokens, recipe):
+    """
+    Enter edit mode with the current recipe if the current user owns it
+    :param tokens: processed line of input
+    :param recipe: recipe to edit
+    :return:
+    """
     if USER.uid == recipe.owner.uid:
         print("Now editing '", recipe.name, "'", sep='')
         return RecipeCreateLoop(recipe)
@@ -294,6 +302,12 @@ def make(tokens, optional=None):
 
 
 def saveRecipe(tokens, recipe):
+    """
+    Saves the recipe if it is fully filled in, otherwise gives an error message
+    :param tokens: processed line of input
+    :param recipe: recipe being saved
+    :return:
+    """
     ready = True
     if len(recipe.ingredients.keys()) == 0:
         print("Cannot save recipe with zero ingredients")
@@ -324,6 +338,12 @@ def saveRecipe(tokens, recipe):
 
 
 def canMake(USER, Recipe):
+    """
+    Returns true if user can make recipe
+    :param USER: user
+    :param Recipe: recipe user wants to make
+    :return:
+    """
     for ingredient in list(Recipe.ingredients.keys()):
         if(ingredient in USER.owned_ingredients):
             if(Recipe.ingredients[ingredient] <= USER.owned_ingredients[ingredient]):
@@ -501,6 +521,12 @@ def removeEquipment(tokens, recipe):
 
 
 def createRecipe(tokens, optional=None):
+    """
+    Enter recipe create loop with a new empty recipe
+    :param tokens: processed line of input
+    :param optional: N/A
+    :return:
+    """
     return RecipeCreateLoop(
         Recipe(manager=MANAGER, rid=None, servings=None, time=None, name=tokens[1],
                owner_id=USER.uid, equip=[], owner=USER, ingr={}, steps=[])
@@ -647,6 +673,11 @@ def increaseIngredient(tokens, optional=None):
 
 
 def register_ing_prompt(iname):
+    """
+    Prompts to see if user wants to register a new ingredient
+    :param iname: name of ingredient
+    :return: new ingredient or None
+    """
     userin = input("ingredient '" + iname + "' does not currently exist in the database\n\nWould you like to add it? (Y/N)\n>")
     if(userin.strip() == "Y"):
         ing = Ingredient.register_ingredient(MANAGER, iname, input(
@@ -726,7 +757,34 @@ def recent(tokens, optional=None):
     return RecipeListLoop(list(MANAGER.recent_recipes()))
 
 
+def similar(tokens, optional=None):
+    """
+    Takes user to recipe list loop with list of recipes with similar ingredients
+    :param tokens: processed line of input
+    :param optional: current recipe
+    :return:
+    """
+    return RecipeListLoop(list(item[0] for item in optional.similar_by_ingredient()))
+
+
+def recommended(tokens, optional=None):
+    """
+    Takes user to recipe list loop with list of other recipes made by users that
+    made this one
+    :param tokens: processed line of input
+    :param optional: current recipe
+    :return:
+    """
+    return RecipeListLoop(list(item[0] for item in optional.similar_by_makers()))
+
+
 def popular(tokens, optional=None):
+    """
+    Displays the 10 most made recipes for the week to the user
+    :param tokens: processed line of input
+    :param optional: N/A
+    :return:
+    """
 
     return RecipeListLoop(list(item[0] for item in Recipe.get_popular_recipes(MANAGER, 10)))
 
@@ -807,7 +865,9 @@ recipeViewCommands = {
     HALVE: halveRecipe,
     DOUBLE: doubleRecipe,
     DELETE_RECIPE: deleteRecipe,
-    EDIT_RECIPE: editRecipe
+    EDIT_RECIPE: editRecipe,
+    SIMILAR: similar,
+    RECOMMENDED: recommended
 }
 
 ingredientListCommands = {
