@@ -6,6 +6,7 @@ from model.recipe import Recipe
 import matplotlib.pyplot as plt
 from textwrap import wrap
 
+import datetime
 
 """
 @filename - analytics.py
@@ -55,9 +56,22 @@ def recipes_by_week_graph(manager):
     X = []
     Y = []
 
+    lastX = None
+
     for week, count in pairs:
+        if(lastX is None):
+            lastX = week
+        while (week - lastX) > datetime.timedelta(7):
+            lastX += datetime.timedelta(7)
+            X.append(lastX)
+            Y.append(0)
+
+
+
         X.append(week)
         Y.append(count)
+
+        lastX = week
 
     fig1, ax1 = plt.subplots()
     ax1.set_title("Recipes Made Weekly")
