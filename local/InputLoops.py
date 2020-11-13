@@ -775,7 +775,10 @@ def recommended(tokens, optional=None):
     :param optional: current recipe
     :return:
     """
-    return RecipeListLoop(list(item[0] for item in optional.similar_by_makers()))
+    if optional is not None:
+        return RecipeListLoop(list(item[0] for item in optional.similar_by_makers()))
+    else:
+        return RecipeListLoop(list(item[0] for item in USER.recommended_recipes()))
 
 
 def popular(tokens, optional=None):
@@ -836,7 +839,8 @@ mainLoopCommands = {
     INVENTORY: inventory,
     DELETE_RECIPE: deleteAccount,
     MY_RECENT: myRecent,
-    POPULAR: popular
+    POPULAR: popular,
+    RECOMMENDED: recommended
 }
 
 loginCommands = {
