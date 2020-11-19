@@ -1,0 +1,353 @@
+# h's Project Report #
+Phase 4
+
+The phase 4 version of our project integrates many new analytics features, built on SQL with frontends for display of the data built on Python & matplotlib.  The main analytic features spotlighted in this report are:
+
+ - Recipes compatible with the user's current inventory
+ - Most commonly used ingredients
+ - Most commonly made recipes
+ - Similar recipes based on user recipe-making trends
+ - Similar recipes based on ingredient composition
+ - Recipes made per week
+ - An overall recommended recipes feature
+
+While all data and analytics are collected and performed using SQL, two main tactics were used in the presentation of this data.  For common ingredients, recipes per week, and most popular recipes, matplotlib was used ta analyze and display data, whereas with compatible & similar recipes, options were incorperated into the existing GUI to allow users to apply these analytics to their own accounts.
+
+Detailed descriptions of the SQL queries used can be found accompanying the queries in the following appendix
+
+## Project Demonstration
+
+video::XNm6vfVx6dw[youtube]
+
+## SQL Queries Used
+
+### Identifying Commonly Used Ingredients
+
+```sql
+SELECT ingredients.iname, unit, storage_location, COUNT(rid)
+FROM ingredients
+JOIN requires_ingredient ON requires_ingredient.iname = ingredients.iname
+GROUP BY ingredients.iname
+ORDER BY COUNT(rid) DESC
+LIMIT %s;
+```
+
+This query attempts to select an ingredient record (`ingredients.iname, unit, storage_location`) along with the number of ingredients.  This is done by starting a query on the ingredients table (`FROM ingredients`), and then checking the `requires_ingredient` table for any Recipe-requires-Ingredient relations calling for this ingredient (`JOIN requires_ingredient ON requires_ingredient.iname = ingredients.iname`).  At this point, each row should have one ingredient, and one recipe that uses that ingredient, for each ingredient, and each place that that ingredient is used.  In order to get the count of the number of recipes that *each ingredient* uses, we need to group by ingredient.  Now, each ingredient record should have a group containing rows for all the recipes that call for that ingredient.  By counting up the number of these rows with `COUNT(rid)`, we can get the number of recipes that call for each ingredient.  These are then sorted by their counts, and limited to the correct number.
+
+### Most Commonly Made Recipes
+
+```sql
+SELECT
+    recipes.*,
+    owner.*,
+    COUNT(DISTINCT dates_made.uid) as n_users
+FROM recipes
+JOIN dates_made ON dates_made.rid = recipes.rid
+JOIN users
+    AS owner
+    ON owner.uid = recipes.owner_id
+GROUP BY recipes.rid, owner.uid
+ORDER BY n_users DESC
+LIMIT %s;
+```
+
+The most commonly made recipes query works very similarly to the most common ingredients, with sorting ingredients by the number of recipe-requires-ingredient relations mapping onto sorting recipes by the number of user-made-recipe relations.  There are, however, a few key differences.  Most importantly, this does not count one user making a recipe two time as two times that recipe has been made.  In other words, this counts the number of users who made the recipe, not the number of times the recipe was made.  This is done by adding a DISTINCT clause to the COUNT agregator, essentially counting the number of unique UIDs who've made this recipe
+
+Another key difference is the addition of the owner columns, which correspond to the `owner_id` field on the recipes returned.  Because one recipe is only owned by one user, this does not increase the number of records returned, but only adds in this additional field.  This is done to reduce the number of queries needed to display the recipes to the user.  Instead of running a seperate query for each recipe returned in order to get the recipe owner, the entire process is looped into one query at a much reduced overhead.
+
+### Similar Recipes by Common Makers
+
+```sql
+SELECT recipes.*, owner.*, COUNT(DISTINCT users.uid)
+FROM dates_made AS self_dates_made
+JOIN users ON users.uid = self_dates_made.uid
+JOIN dates_made
+    AS alt_dates_made
+    ON alt_dates_made.uid = users.uid
+JOIN recipes ON alt_dates_made.rid = recipes.rid
+JOIN users
+    AS owner
+    ON owner.uid = recipes.owner_id
+WHERE self_dates_made.rid = %s
+    AND recipes.rid != %s
+GROUP BY recipes.rid, owner.uid
+ORDER BY COUNT(users.uid) DESC
+LIMIT %s;
+```
+
+This is the point that queries start to get a little bit more complicated.  To set the goalposts, this query aims to determine the most similar recipes with the assumption that the more similar recipes are, the more users will have made both of them.  Based on this, we can set a similarity score between recipe A and recipe B based on the number of users that have made both A and B.  This is a score we add to later on in this document, but for this query, this simpler definition will do.  As a starting point, we'll be given the id of recipe A, and need to compute a score for each other recipe in the database.
+
+To get this score, we start with querying the `dates_made` table, which you might recall represents the `user-made-recipe` relation, wherein any number of users can make a recipe, a recipe can be made by any number of users, and a user can make a recipe multiple times.  We specifically pick out all of the times that our original recipe, recipe A, was made with the first term of the query's `WHERE` clause.
+
+We next add in the users table, in order to get all of the users who have made recipe A, in addition to the list of times they made it that we already have.  This step could theoretically be skipped by just directly using the `self_dates_made.uid` column in the next `JOIN`, but is left in for clarity sake.
+
+At this point, we `JOIN dates_made` again, meaning that the `dates_made` table is in this query twice.  Note, however, that the original, `self_dates_made` has been restricted to only the dates made of recipe A, whereas the second, `alt_dates_made`, which we just joined, is defined as being all of the times a user who has made recipe A has made any other recipe.
+
+Finally, we `JOIN recipes` in order to get the full `recipe` record for each of the dates made we just gathered.  This is also where the second term of the `WHERE` clause comes into play, by ensuring that this new addition to the query does not contain recipe A, as all recipes are very similar to themselves, but that's not useful information.  In other words, recipe A and recipe B must be two different recipes.  Our query now contains:
+
+* A time that recipe A was made (`self_dates_made`)
+* The user who made recipe A (`users`)
+* A different time that that same user made a different recipe (recipe B) (`alt_dates_made`)
+* More information about the second recipe that user made (`recipes`)
+
+You might notice that there's an additional `JOIN` adding in `users AS owner`.  This is the same technique we used earlier, and works the same way for the same reason.
+
+In order to generate our final score, we need to group by the new recipe, stored in the `recipes` table.  We can then count up the number of unique user id's who've made that recipe.  Remember that because the `users` table was joined on users that have made recipe A, all of the users counted here will be users who have also made recipe A in addition to making recipe B.
+
+Finally, we order by the score and take the appropriate limit.
+
+### Similar Recipes by Ingredient Composition
+
+```sql
+SELECT
+    foreign_recipe.*,
+    foreign_owner.*,
+    COUNT(DISTINCT common_ingredients.iname)::float / COUNT(DISTINCT all_ingredients.iname)::float
+        AS similarity
+FROM requires_ingredient AS self_ingredients
+JOIN requires_ingredient
+    AS common_ingredients
+    ON common_ingredients.iname = self_ingredients.iname
+JOIN recipes
+    AS foreign_recipe
+    ON foreign_recipe.rid = common_ingredients.rid
+JOIN requires_ingredient
+    AS all_ingredients
+    ON all_ingredients.rid = %s
+    OR all_ingredients.rid = foreign_recipe.rid
+JOIN users
+    AS foreign_owner
+    ON foreign_owner.uid = foreign_recipe.owner_id
+WHERE self_ingredients.rid = %s
+    AND foreign_recipe.rid != %s
+GROUP BY foreign_recipe.rid, foreign_owner.uid
+ORDER BY similarity DESC
+LIMIT %s;
+```
+
+As these queries start to get a little more complicated, I'll be going into less depth per individual JOIN line and get a little more abstract, in an effort to keep this report to a readable length.  If are having difficulty understanding the rationalle behind a line, I encourage you to identify a similar pattern in a previous query, as many techniques are repeated.
+
+This query aims to determine what percent of ingredients two recipes have in common, and then output all of the recipes sorted by similarity to an input recipe along with their score, in the same format as the other "similar by" query.
+
+To begin with, we query all ingredients used by recipe A, and find all other recipes where those ingredients are used.  For each record in the query at this point, the following information is included:
+
+* An ingredient used in recipe A (`self_ingredients`)
+* Another time that that ingredient was used in a recipe (`common_ingredients`)
+* The recipe that the second ingredient was used in (`foreign_recipe`)
+* An ingredient that was used in either recipe A or recipe B (`all_ingredients`)
+* The user who made owns recipe B (`foreign_owner`)
+
+Records are then grouped by the id of recipe B, such that all columns can be reffered to by how often the occur for a recipe in the `foreign_recipe` table.
+
+The score is computed to be the ratio of unique ingredients for recipe B that were used in recipe A to the number of unique ingredients used in either recipe A or recipe B.  This is the same as the percent of ingredients which are common to both recipes out of all of the relevant ingredients.
+
+### Recipes Made Per Week
+
+```sql
+SELECT
+    make_date(date_part('year', datemade)::int, 1, 1) + (7 * date_part('week', datemade)::int) as week,
+    COUNT(DISTINCT rid)
+FROM dates_made
+WHERE datemade > %s
+GROUP BY week
+ORDER BY week
+LIMIT %s;
+```
+
+We're going to take a break from long queries for a second to discuss a query that might be short, but may be complicated to understand by the mechanics at play.  The recipes per week query only queries one table, but has a very unique output format in that it outputs records in the form of (date, count), where date is a unique week, and count is the number of recipes that were made during that week.
+
+This is accomplished by the first term of the `SELECT`.  This term can be broken into two smaller terms which are added together to produce the main term:
+
+```sql
+make_date(date_part(`year`, datemade)::int, 1, 1)
+```
+
+This first term is the equivilent of `floor` for dates.  It works by extracting the year that the record was made (`date_part('year', datemade)`), and generating a date representing the first day of the first month of this year.  Note that for any two recipes made in the same year, this term will be identical.
+
+```sql
+7 * date_part(`week`, datemade)::int
+```
+
+Meanwhile, the second term identifies which week of the year it is (`date_part('week', datemade)`) casts it into an int, and multiplies it by seven to identify the number of days into the year that the first day of this week was.  For example, the second week of the year, week 1, would start seven days into the year.  This is *not* the number of days into the year that the recipe was made, but the number of days into the year that *the week the recipe was made in began*.
+
+In postgres, combining a date with an int has the effect of adding that many days to the date.  So, when we add these two terms together, we get the date of the first day of the week that this recipe was made.
+
+Because this will be the same for any recipes made during the same week, when we group by this term and count up the other terms we get the number of recipes what was made during that week.
+
+### Recipes Compatible with User Inventory
+
+```sql
+SELECT
+    recipes.*,
+    owner.*,
+    SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
+        SELECT COUNT(iname)
+        FROM requires_ingredient
+        WHERE requires_ingredient.rid = recipes.rid
+    ) AS percent_owned
+FROM ingredient_ownership
+JOIN requires_ingredient
+    AS ownd_comp
+    ON ownd_comp.iname = ingredient_ownership.iname
+JOIN recipes
+    ON ownd_comp.rid = recipes.rid
+JOIN users
+    AS owner
+    ON owner.uid = recipes.owner_id
+WHERE ingredient_ownership.uid = %s
+GROUP BY recipes.rid, owner.uid
+ORDER BY percent_owned DESC
+LIMIT %s;
+```
+
+Many users may want to be able to find recipes that they can make right now, without needing to pick things up from the grocery store.  Also handy to know is what recipes can be made while only getting a couple of things from the store.  In an effort to accomidate this, we aim to write a query that can determine what percent of ingredients a user owns for a given recipe, and then find the most compatible recipes in the database for that user.
+
+Our query begins with all of the ingredients that the user owns, joining in all of the recipes which can be made with those ingredients.  Important information here is the amount of the ingredient owned by the user, and the amount called for by the recipe.  Using these, we can compute how much of the needed amount the user has for each ingredient, up to 100%.  Summing these up gives a value that's similar to the number of ingredients that the user owns, but includes partial ingredients towards that number.  When we divide this by the total number of ingredients in the recipe, we can get the percent of ingredients owned.
+
+Notice that we are collecting the total number of ingredients using a subquery.  This query returns one value, namely the number of records in the recipe-requires-ingredient relation that are ingredients required by the recipe in question, or in other words, the number of ingredients in the recipe.
+
+### Combined Recommendation Analytics
+
+```sql
+WITH user_commonality AS (
+    SELECT
+        others_made.uid as uid,
+        COUNT(others_made.rid)::float / (
+            SELECT COUNT(rid)
+            FROM dates_made
+            WHERE uid = others_made.uid
+                OR uid = %s
+        ) AS percent_shared
+    FROM dates_made AS personally_made
+    JOIN dates_made
+        AS others_made
+        ON others_made.rid = personally_made.rid
+    WHERE personally_made.uid = %s
+        AND others_made.uid != %s
+    GROUP BY others_made.uid
+),
+users_by_recipe AS (
+    SELECT
+        uid,
+        rid,
+        LOG(COUNT(id)) + 1 as degree
+    FROM dates_made
+    GROUP BY uid, rid
+),
+recipe_ownership AS (
+    SELECT
+        recipes.rid,
+        SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
+            SELECT COUNT(iname)
+            FROM requires_ingredient
+            WHERE requires_ingredient.rid = recipes.rid
+        ) AS percent_owned
+    FROM ingredient_ownership
+    JOIN requires_ingredient
+        AS ownd_comp
+        ON ownd_comp.iname = ingredient_ownership.iname
+    JOIN recipes
+        ON ownd_comp.rid = recipes.rid
+    WHERE ingredient_ownership.uid = %s
+    GROUP BY recipes.rid
+),
+scores AS (
+    SELECT
+        users_by_recipe.rid,
+        SUM(user_commonality.percent_shared * users_by_recipe.degree) as score,
+        SUM(percent_owned) AS percent_owned
+    FROM users_by_recipe
+    JOIN user_commonality ON users_by_recipe.uid = user_commonality.uid
+    JOIN recipe_ownership ON users_by_recipe.rid = recipe_ownership.rid
+    GROUP BY users_by_recipe.rid
+)
+SELECT
+    recipes.*,
+    users.*,
+    percent_owned,
+    (percent_owned/2 + 0.5) * score AS recommendation_degree
+FROM scores
+JOIN recipes ON recipes.rid = scores.rid
+JOIN users ON recipes.owner_id = users.uid
+ORDER BY recommendation_degree DESC;
+```
+
+The final query is very large, but is largely made of previous queries, and can be easily chunked off into auxillery queries.
+
+```sql
+SELECT
+    others_made.uid as uid,
+    COUNT(others_made.rid)::float / (
+        SELECT COUNT(rid)
+        FROM dates_made
+        WHERE uid = others_made.uid
+            OR uid = %s
+    ) AS percent_shared
+FROM dates_made AS personally_made
+JOIN dates_made
+    AS others_made
+    ON others_made.rid = personally_made.rid
+WHERE personally_made.uid = %s
+    AND others_made.uid != %s
+GROUP BY others_made.uid
+```
+
+This  query identifies the percent of recipes made by either this user or another user that were made by both.  (recipes made by both / recipes made by either).  This value is termed percent shared.  Here the others_made table is limited to an instance of a time that another user made a recipe that this user has also made.  A subquery is used to count the number of recipes that the other user has made in total.  The final result is in the form of (unique uid for another user, percent of recipes shared).
+
+```sql
+SELECT
+    uid,
+    rid,
+    LOG(COUNT(id)) + 1 as degree
+FROM dates_made
+GROUP BY uid, rid
+```
+
+This auxillery query is used to count how many times a user has made a recipe.  Note, however, that this produces the logarithm of this value.  This is in an effort to stop outlying repeated cookings of a recipe from distorting the data and giving one recipe far too much weight if someone the user has recipes in common with has made it many times.
+
+```sql
+SELECT
+    recipes.rid,
+    SUM(LEAST(1.0, qtyowned / ownd_comp.amount)) / (
+        SELECT COUNT(iname)
+        FROM requires_ingredient
+        WHERE requires_ingredient.rid = recipes.rid
+    ) AS percent_owned
+FROM ingredient_ownership
+JOIN requires_ingredient
+    AS ownd_comp
+    ON ownd_comp.iname = ingredient_ownership.iname
+JOIN recipes
+    ON ownd_comp.rid = recipes.rid
+WHERE ingredient_ownership.uid = %s
+GROUP BY recipes.rid
+```
+
+This query is a simplified version of the "compatible recipes" query from earlier.  It outputs in the form of (recipe id, percent owned).
+
+```sql
+SELECT
+    users_by_recipe.rid,
+    SUM(user_commonality.percent_shared * users_by_recipe.degree) as score,
+    SUM(percent_owned) AS percent_owned
+FROM users_by_recipe
+JOIN user_commonality ON users_by_recipe.uid = user_commonality.uid
+JOIN recipe_ownership ON users_by_recipe.rid = recipe_ownership.rid
+GROUP BY users_by_recipe.rid
+```
+
+Two scores are computed:  First, a primary score representing how strongly we'd recommend this recipe to a user who didn't have to consider what was in their pantry.  This score is expressed by the sum of the number of users who've made this recipe, each weighted by the logarithmic count of how many times they've made this recipe, as calculated earlier, and the degree of similarity between that user and the user issuing the query.  Second, the percent owned metric calculated earlier is included.
+
+```sql
+SELECT
+    recipes.*,
+    users.*,
+    percent_owned,
+    (percent_owned/2 + 0.5) * score AS recommendation_degree
+FROM scores
+JOIN recipes ON recipes.rid = scores.rid
+JOIN users ON recipes.owner_id = users.uid
+ORDER BY recommendation_degree DESC;
+```
+
+Finally, a recommendation degree is computed based on the raw score, with a reduction of up to 50% based on how much of the recipe the user owns.  This ensures that not owning the ingredients won't stop you from making a recipe that's perfect for you, but will mean that the recipe will have to match with you a little bit more in order to win out over similarly scoring recipes with a few more shared ingredients.
