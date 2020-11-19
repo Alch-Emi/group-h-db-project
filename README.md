@@ -20,6 +20,13 @@ This project is broken into several components:
  - A generator, found in local/generator.  This is used to generate fake, random data to
    fill the database, using a starter vocabulary.
 
+## Reports
+
+Reports for phases three and four can be found in the `report/` directory.
+These can be viewed using any text editor, rendered as Markdown, or, for the
+full experience, rendered as Asciidoctor.  If you are viewing a pre-assembled
+source code package, it is likely a PDF version has been included.
+
 ## Installation & Execution
 
 To install:
